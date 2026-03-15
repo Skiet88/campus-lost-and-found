@@ -153,33 +153,182 @@ C4Component
 
 ---
 
-## Level 4 — Key Design Decisions (Code Level)
+## Level 4 — Code Diagram (Key Entities)
 
-### Authentication Flow
-- User registers with university email → password hashed with `bcrypt` → stored in `users` table
-- On login, a signed **JWT token** is returned → stored in browser `localStorage`
-- All protected API routes validate the JWT via `rbacMiddleware` before processing
+> Shows the core classes/entities of the system, their attributes, and relationships.
 
-### Item Reporting Flow
-1. User fills the Report Form → submits with optional image
-2. Image is sent to `imageController` → uploaded to **Cloudinary** → URL returned
-3. Item record (with Cloudinary URL) saved to `items` table in PostgreSQL
-4. `notifController` checks for potential matches and fires notifications if found
+```mermaid
+classDiagram
+    class User {
+        +int id
+        +string name
+        +string email
+        +string password_hash
+        +enum role
+        +datetime created_at
+        +register()
+        +login()
+        +updateProfile()
+    }
 
-### Claim & Verification Flow
-1. User clicks "Claim This Item" on the Item Detail Page
-2. Claim record created in `claims` table with status `PENDING`
-3. Admin reviews claim in Claim Management Panel
-4. Admin approves → status updated to `APPROVED` → both parties notified
-5. Item status updated to `RESOLVED` once physically retrieved
+    class Item {
+        +int id
+        +int user_id
+        +enum type
+        +string title
+        +string description
+        +string location
+        +date date_lost_found
+        +string image_url
+        +enum status
+        +datetime created_at
+        +reportItem()
+        +updateStatus()
+        +deleteItem()
+    }
+
+    class Claim {
+        +int id
+        +int item_id
+        +int claimant_id
+        +string description
+        +enum status
+        +datetime created_at
+        +submitClaim()
+        +approveClaim()
+        +rejectClaim()
+    }
+
+    class Notification {
+        +int id
+        +int user_id
+        +string message
+        +boolean is_read
+        +datetime created_at
+        +sendNotification()
+        +markAsRead()
+    }
+
+    class Admin {
+        +int id
+        +string name
+        +string email
+        +manageItems()
+        +manageClaims()
+        +resolveCase()
+    }
+
+    User "1" --> "0..*" Item : reports
+    User "1" --> "0..*" Claim : submits
+    Item "1" --> "0..*" Claim : receives
+    User "1" --> "0..*" Notification : receives
+    Admin "1" --> "0..*" Claim : reviews
+    Admin "1" --> "0..*" Item : manages
+    Claim "1" --> "1..*" Notification : triggers
+    Item "1" --> "1..*" Notification : triggers
+```
+
+---
+
+## End-to-End Data Flow
+
+> Shows how data moves through the entire system for the three core workflows.
+
+### Flow 1: Reporting a Lost or Found Item
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant WebApp as React Web App
+    participant API as Node.js API Server
+    participant Cloudinary as Cloudinary
+    participant DB as PostgreSQL
+    participant Notif as Notification Service
+
+    User->>WebApp: Fill report form (title, description, location, image)
+    WebApp->>API: POST /items (form data + image file)
+    API->>API: Validate JWT token (RBAC Middleware)
+    API->>Cloudinary: Upload image file
+    Cloudinary-->>API: Return image URL
+    API->>DB: INSERT into items table (with image URL)
+    DB-->>API: Confirm item saved
+    API->>DB: Query for potential matches (lost vs found)
+    DB-->>API: Return matching items (if any)
+    API->>Notif: Trigger match notification (if match found)
+    Notif-->>User: Send email + in-app alert
+    API-->>WebApp: Return success + new item data
+    WebApp-->>User: Show confirmation message
+```
+
+---
+
+### Flow 2: Claiming a Found Item
+
+```mermaid
+sequenceDiagram
+    actor Claimant
+    actor Admin
+    participant WebApp as React Web App
+    participant API as Node.js API Server
+    participant DB as PostgreSQL
+    participant Notif as Notification Service
+
+    Claimant->>WebApp: View found item, click "Claim This Item"
+    WebApp->>API: POST /claims (item_id + claim description)
+    API->>API: Validate JWT token
+    API->>DB: INSERT claim with status = PENDING
+    DB-->>API: Claim saved
+    API->>Notif: Notify Admin of new claim
+    Notif-->>Admin: Email + in-app alert (new claim pending)
+    Admin->>WebApp: Open Claim Management Panel
+    WebApp->>API: GET /claims (admin only)
+    API->>DB: Fetch all PENDING claims
+    DB-->>API: Return claims list
+    API-->>WebApp: Return claims data
+    Admin->>WebApp: Click Approve / Reject
+    WebApp->>API: PUT /claims/:id (status = APPROVED or REJECTED)
+    API->>DB: UPDATE claim status
+    API->>DB: UPDATE item status = RESOLVED (if approved)
+    API->>Notif: Notify claimant of decision
+    Notif-->>Claimant: Email + in-app alert (claim approved/rejected)
+    API-->>WebApp: Confirm update
+    WebApp-->>Admin: Show updated claim status
+```
+
+---
+
+### Flow 3: User Login & Authentication
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant WebApp as React Web App
+    participant API as Node.js API Server
+    participant DB as PostgreSQL
+
+    User->>WebApp: Enter email and password
+    WebApp->>API: POST /auth/login
+    API->>DB: SELECT user WHERE email = ?
+    DB-->>API: Return user record
+    API->>API: Compare password with bcrypt hash
+    alt Password correct
+        API->>API: Generate signed JWT token
+        API-->>WebApp: Return JWT token + user role
+        WebApp->>WebApp: Store JWT in localStorage
+        WebApp-->>User: Redirect to Dashboard
+    else Password incorrect
+        API-->>WebApp: Return 401 Unauthorized
+        WebApp-->>User: Show error message
+    end
+```
 
 ---
 
 ## Database Schema (Summary)
 
 ```
-users         → id, name, email, password_hash, role, created_at
-items         → id, user_id, type (LOST/FOUND), title, description, location, date, image_url, status, created_at
+users         → id, name, email, password_hash, role (STUDENT/STAFF/ADMIN), created_at
+items         → id, user_id, type (LOST/FOUND), title, description, location, date, image_url, status (ACTIVE/RESOLVED), created_at
 claims        → id, item_id, claimant_id, description, status (PENDING/APPROVED/REJECTED), created_at
 notifications → id, user_id, message, is_read, created_at
 ```
