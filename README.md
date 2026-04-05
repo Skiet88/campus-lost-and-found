@@ -17,10 +17,44 @@ Once completed, the system will allow users to:
 
 ## Project Documents
 
+### Assignment 3 — System Specification & Architecture
+
 | Document | Description |
 |----------|-------------|
-| [SPECIFICATION.md](./SPECIFICATION.md) | Full system specification including domain, problem statement, requirements, and technology stack |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | C4 architectural diagrams (Context, Container, Component levels) built with Mermaid |
+| [SPECIFICATION.md](./SPECIFICATION.md) | Full system specification: domain, problem statement, scope, requirements, and technology stack |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | C4 architectural diagrams (Context, Container, Component, Code levels) using Mermaid |
+
+---
+
+### Assignment 4 — Stakeholder & Requirements Analysis
+
+| Document | Description |
+|----------|-------------|
+| [STAKEHOLDERS.md](./STAKEHOLDERS.md) | Stakeholder analysis: 7 stakeholders with roles, concerns, pain points, and success metrics |
+| [REQUIREMENTS.md](./REQUIREMENTS.md) | System Requirements Document: 12 functional + 14 non-functional requirements with traceability matrix |
+| [REFLECTION.md](./REFLECTION.md) | Reflection on challenges faced balancing stakeholder needs |
+
+---
+
+### Assignment 5 — Use Case Modeling & Test Case Development
+
+| Document | Description |
+|----------|-------------|
+| [USECASES.md](./USECASES.md) | Use case diagram (Mermaid) with written explanation of actors, relationships, and stakeholder alignment |
+| [USE_CASE_SPECS.md](./USE_CASE_SPECS.md) | 8 detailed use case specifications with preconditions, postconditions, basic and alternative flows |
+| [TEST_CASES.md](./TEST_CASES.md) | 14 functional test cases + 2 non-functional tests (performance & security) |
+| [REFLECTION5.md](./REFLECTION5.md) | Reflection on challenges in translating requirements to use cases and test cases |
+
+---
+
+### Assignment 6 — Agile Planning
+
+| Document | Description |
+|----------|-------------|
+| [USER_STORIES.md](./USER_STORIES.md) | 14 user stories with acceptance criteria and priority, traced to requirements and use cases |
+| [BACKLOG.md](./BACKLOG.md) | MoSCoW prioritized product backlog with Fibonacci story points and dependencies |
+| [SPRINT_PLAN.md](./SPRINT_PLAN.md) | Sprint 1 goal, selected stories, task breakdown, timeline, and definition of done |
+| [REFLECTION6.md](./REFLECTION6.md) | Reflection on challenges in Agile planning as a solo developer |
 
 ---
 
@@ -31,9 +65,10 @@ Once completed, the system will allow users to:
 | Frontend | React.js |
 | Backend | Node.js + Express |
 | Database | PostgreSQL |
-| Image Storage | Cloudinary |
+| Image Storage | Cloudinary (free tier) |
 | Authentication | JWT + bcrypt |
 | Notifications | Nodemailer + WebSockets |
+| Hosting | Render / Railway |
 
 ---
 
@@ -41,3 +76,4 @@ Once completed, the system will allow users to:
 
 **Postgraduate Student — ICT: Application Development**
 Cape Peninsula University of Technology (CPUT)
+Academic Year: 2026
