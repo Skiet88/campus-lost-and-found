@@ -4,7 +4,7 @@
 
 The **Campus Lost & Found System (CLAFS)** is a web-based application designed to help university students, lecturers, staff, and campus security efficiently manage lost and found items on campus.
 
-Currently, lost and found management on most campuses is manual — relying on physical offices, notice boards, and word of mouth. CLAFS replaces this with a centralized digital platform where anyone on campus can report a lost or found item, upload a photo, and connect with the rightful owner through a structured claim and verification process.
+Currently, lost and found management on most campuses is manual  relying on physical offices, notice boards, and word of mouth. CLAFS replaces this with a centralized digital platform where anyone on campus can report a lost or found item, upload a photo, and connect with the rightful owner through a structured claim and verification process.
 
 Once completed, the system will allow users to:
 - 📋 **Report** lost or found items with descriptions, location, date, and images
@@ -17,7 +17,7 @@ Once completed, the system will allow users to:
 
 ## Project Documents
 
-### Assignment 3 — System Specification & Architecture
+### System Specification & Architecture
 
 | Document | Description |
 |----------|-------------|
@@ -26,7 +26,7 @@ Once completed, the system will allow users to:
 
 ---
 
-### Assignment 4 — Stakeholder & Requirements Analysis
+###  Stakeholder & Requirements Analysis
 
 | Document | Description |
 |----------|-------------|
@@ -36,7 +36,7 @@ Once completed, the system will allow users to:
 
 ---
 
-### Assignment 5 — Use Case Modeling & Test Case Development
+### Use Case Modeling & Test Case Development
 
 | Document | Description |
 |----------|-------------|
@@ -47,7 +47,7 @@ Once completed, the system will allow users to:
 
 ---
 
-### Assignment 6 — Agile Planning
+###  Agile Planning
 
 | Document | Description |
 |----------|-------------|
@@ -74,6 +74,7 @@ Once completed, the system will allow users to:
 
 ## Author
 
-**Postgraduate Student — ICT: Application Development**
+**Mlungisi Mbuyazi**
+Postgraduate Student — ICT: Application Development
 Cape Peninsula University of Technology (CPUT)
 Academic Year: 2026
