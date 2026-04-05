@@ -71,8 +71,7 @@ graph LR
     UC9 -->|"«include»"| UC7
     UC12 -->|"«include»"| UC13
 
-    %% ── EXTEND RELATIONSHIPS ──
-    UC2 -.->|"«extend»"| UC7
+
 ```
 
 ---
