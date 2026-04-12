@@ -57,6 +57,16 @@ Once completed, the system will allow users to:
 | [REFLECTION6.md](./REFLECTION6.md) | Reflection on challenges in Agile planning as a solo developer |
 
 ---
+ 
+### Assignment 7 — GitHub Kanban Board & Template Analysis
+ 
+| Document | Description |
+|----------|-------------|
+| [TEMPLATE_ANALYSIS.md](./TEMPLATE_ANALYSIS.md) | Comparison of 4 GitHub project templates with justification for Automated Kanban selection |
+| [KANBAN_EXPLANATION.md](./KANBAN_EXPLANATION.md) | Definition of Kanban, board structure, WIP limits, and Agile alignment |
+| [REFLECTION_A7_KANBAN.md](./REFLECTION_A7_KANBAN.md) | Reflection on template selection challenges and comparison with Trello and Jira |
+ 
+---
 
 ## Technology Stack
 
