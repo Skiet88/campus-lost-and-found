@@ -93,3 +93,10 @@ As a solo developer, blockers are common waiting for a Cloudinary API key, an SM
 
 **Why "Sprint 1" column was added:**
 The default template does not distinguish between the full backlog and the current sprint commitment. Adding a Sprint 1 column creates a clear visual separation between "everything we plan to do eventually" (Backlog) and "what we have committed to deliver in the next two weeks" (Sprint 1).
+
+
+## 3. Kanban Board Screenshot
+
+![CLAFS Kanban Board](./screenshots/kanban-board.png)
+
+![CLAFS Kanban Board Issue](./screenshots/issue.png)

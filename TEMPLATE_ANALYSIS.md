@@ -55,3 +55,8 @@ Automated Kanban on GitHub is widely used in professional software teams. Workin
 | **Basic Kanban** | No automation, it requires all board updates to be done manually, which is inefficient for a solo developer |
 | **Bug Triage** | Designed specifically for bug management workflows, not for feature development and sprint planning |
 | **Team Planning** | Focused on distributing work across team members less relevant for a solo project with no collaboration |
+
+
+## 5. Template Selection Screenshot
+
+![GitHub Template Comparison](./screenshots/template-comparison.png)
