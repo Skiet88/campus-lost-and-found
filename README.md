@@ -58,7 +58,7 @@ Once completed, the system will allow users to:
 
 ---
  
-### Assignment 7 — GitHub Kanban Board & Template Analysis
+### GitHub Kanban Board & Template Analysis
  
 | Document | Description |
 |----------|-------------|
@@ -68,7 +68,7 @@ Once completed, the system will allow users to:
  
 ---
 
-### Assignment 8 — Object State Modeling & Activity Workflow Modeling
+### Object State Modeling & Activity Workflow Modeling
  
 | Document | Description |
 |----------|-------------|
