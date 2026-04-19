@@ -68,6 +68,31 @@ Once completed, the system will allow users to:
  
 ---
 
+### Assignment 8 — Object State Modeling & Activity Workflow Modeling
+ 
+| Document | Description |
+|----------|-------------|
+| [STATE_DIAGRAMS.md](./STATE_DIAGRAMS.md) | 8 UML state transition diagrams for core system objects: Item Report, Claim, User Account, Notification, Image Upload, User Session, Admin Case, Search Query |
+| [ACTIVITY_DIAGRAMS.md](./ACTIVITY_DIAGRAMS.md) | 8 UML activity workflow diagrams with swimlanes covering: Registration, Login, Report Lost Item, Submit Claim, Admin Reviews Claim, Notifications, Mark as Resolved, Search & Filter |
+| [REFLECTION_A8_DIAGRAMS.md](./REFLECTION_A8_DIAGRAMS.md) | Reflection on granularity challenges, parallel actions, and comparison of state vs activity diagrams |
+ 
+---
+ 
+## Kanban Board
+ 
+The CLAFS project is managed using a customised **Automated Kanban** board on GitHub Projects.
+ 
+| Column | Purpose |
+|--------|---------|
+| Backlog | All planned user stories not yet in a sprint |
+| Sprint 1 | Items committed for Sprint 1 delivery |
+| In Progress | Items actively being developed (WIP limit: 3) |
+| Testing | Items awaiting verification against test cases (WIP limit: 2) |
+| Blocked | Items that cannot proceed due to a dependency or blocker |
+| Done | Completed and verified items |
+ 
+---
+
 ## Technology Stack
 
 | Layer | Technology |
