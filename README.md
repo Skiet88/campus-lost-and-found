@@ -77,6 +77,16 @@ Once completed, the system will allow users to:
 | [REFLECTION_A8_DIAGRAMS.md](./REFLECTION_A8_DIAGRAMS.md) | Reflection on granularity challenges, parallel actions, and comparison of state vs activity diagrams |
  
 ---
+
+### Domain Modeling & Class Diagram Development
+ 
+| Document | Description |
+|----------|-------------|
+| [DOMAIN_MODEL.md](./DOMAIN_MODEL.md) | Domain model with 7 core entities, attributes, methods, relationships and business rules |
+| [CLASS_DIAGRAM.md](./CLASS_DIAGRAM.md) | Full UML class diagram in Mermaid with inheritance, composition, aggregation, multiplicity and design decisions |
+| [REFLECTION_A9_DOMAIN.md](./REFLECTION_A9_DOMAIN.md) | Reflection on abstraction challenges, design trade-offs, and alignment with prior assignments |
+ 
+---
  
 ## Kanban Board
  
