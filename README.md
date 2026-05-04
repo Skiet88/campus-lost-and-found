@@ -15,6 +15,25 @@ Once completed, the system will allow users to:
 
 ---
 
+## Assignment 10 Brief
+
+This assignment turns the UML class diagram into working JavaScript source code in [`/src`](./src) and demonstrates all six creational patterns in [`/creational_patterns`](./creational_patterns). I chose JavaScript because the project stack is JavaScript-based throughout, with React.js on the frontend and Node.js + Express on the backend.
+
+Key design decisions were to keep the domain classes focused on core behaviour, use factory-style creation where object setup is repetitive, use Builder for step-by-step report construction, use Prototype for reusable report templates, and use Singleton for the shared database connection. The unit tests in [`/tests`](./tests) cover object creation and pattern behaviour, and [`CHANGELOG.md`](./CHANGELOG.md) tracks the assignment progress.
+
+---
+
+### Assignment 10 Deliverables
+
+| Document | Description |
+|----------|-------------|
+| [`/src`](./src) | Class implementations translated from the UML class diagram |
+| [`/creational_patterns`](./creational_patterns) | Implementations of Simple Factory, Factory Method, Abstract Factory, Builder, Prototype, and Singleton |
+| [`/tests`](./tests) | Unit tests validating object creation and pattern behaviour |
+| [CHANGELOG.md](./CHANGELOG.md) | Assignment 10 progress summary and current project snapshot |
+
+---
+
 ## Project Documents
 
 ### System Specification & Architecture

@@ -1,0 +1,28 @@
+{
+  "name": "clafs",
+  "version": "1.0.0",
+  "description": "Campus Lost and Found System",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --coverage",
+    "test:verbose": "jest --verbose --coverage"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "creational_patterns/**/*.js"
+    ],
+    "coverageDirectory": "coverage"
+  },
+  "keywords": [],
+  "author": "Mlungisi Mbuyazi",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "uuid": "^14.0.0"
+  }
+}
