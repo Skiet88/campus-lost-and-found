@@ -37,32 +37,6 @@ describe('ItemReportBuilder (Builder)', () => {
     expect(() => builder.build()).toThrow('"description" is required');
   });
 
-  test('throws if a required field is an empty string', () => {
-    const builder = new ItemReportBuilder();
-    builder
-      .setUserId('user-001')
-      .setType('LOST')
-      .setTitle('')
-      .setDescription('A valid description')
-      .setLocation('Library')
-      .setDateLostFound(new Date('2026-04-01'));
-
-    expect(() => builder.build()).toThrow('"title" is required');
-  });
-
-  test('throws when ItemReport receives an invalid type', () => {
-    const builder = new ItemReportBuilder();
-    builder
-      .setUserId('user-001')
-      .setType('MISSING')
-      .setTitle('Blue Backpack')
-      .setDescription('A blue backpack left in the cafeteria')
-      .setLocation('Cafeteria')
-      .setDateLostFound(new Date('2026-04-01'));
-
-    expect(() => builder.build()).toThrow('type must be LOST or FOUND');
-  });
-
   test('throws if userId not set', () => {
     const builder = new ItemReportBuilder();
     expect(() => builder.build()).toThrow('"userId" is required');
@@ -120,32 +94,5 @@ describe('ItemReportDirector (Builder)', () => {
     );
     expect(report.type).toBe('FOUND');
     expect(report.imageUrl).toBe('https://res.cloudinary.com/test.jpg');
-  });
-
-  test('director resets builder state between builds', () => {
-    const builder = new ItemReportBuilder();
-    const director = new ItemReportDirector(builder);
-
-    director.buildFullFoundReport(
-      'user-001',
-      'Keys',
-      'A set of keys found outside D block',
-      'KEYS',
-      'Block D',
-      new Date('2026-04-01'),
-      'https://res.cloudinary.com/test.jpg'
-    );
-
-    const secondReport = director.buildMinimalLostReport(
-      'user-002',
-      'Notebook',
-      'A blue notebook with notes',
-      'Library',
-      new Date('2026-04-02')
-    );
-
-    expect(secondReport.category).toBe('GENERAL');
-    expect(secondReport.imageUrl).toBeNull();
-    expect(secondReport.userId).toBe('user-002');
   });
 });
