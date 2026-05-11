@@ -176,6 +176,95 @@ classDiagram
     User "1" --> "0..*" Notification : receives
     Admin "1" --> "0..*" AdminCase : manages
     Claim "1" --> "1..*" Notification : triggers
+    
+        %% ══ REPOSITORY LAYER ══
+    
+        class Repository {
+            <<abstract>>
+            +save(entity) object
+            +findById(id) object
+            +findAll() List
+            +delete(id) Boolean
+            +count() Number
+        }
+    
+        class UserRepository {
+            <<abstract>>
+            +findByEmail(email) object
+            +findByRole(role) List
+            +findVerified() List
+        }
+    
+        class ItemReportRepository {
+            <<abstract>>
+            +findByUserId(userId) List
+            +findByStatus(status) List
+            +findByType(type) List
+            +findByCategory(category) List
+        }
+    
+        class ClaimRepository {
+            <<abstract>>
+            +findByItemId(itemId) List
+            +findByClaimantId(claimantId) List
+            +findByStatus(status) List
+            +existsByClaimantAndItem(claimantId, itemId) Boolean
+        }
+    
+        class NotificationRepository {
+            <<abstract>>
+            +findByUserId(userId) List
+            +findUnreadByUserId(userId) List
+            +markAllReadByUserId(userId) Number
+        }
+    
+        class AdminCaseRepository {
+            <<abstract>>
+            +findByItemId(itemId) object
+            +findByAdminId(adminId) List
+            +findByStatus(status) List
+        }
+    
+        class InMemoryUserRepository
+        class InMemoryItemReportRepository
+        class InMemoryClaimRepository
+        class InMemoryNotificationRepository
+        class InMemoryAdminCaseRepository
+    
+        class DatabaseUserRepository
+        class DatabaseItemReportRepository
+    
+        class RepositoryFactory {
+            +getUserRepository(storageType) Repository
+            +getItemReportRepository(storageType) Repository
+            +getClaimRepository(storageType) Repository
+            +getNotificationRepository(storageType) Repository
+            +getAdminCaseRepository(storageType) Repository
+        }
+    
+        Repository <|-- UserRepository
+        Repository <|-- ItemReportRepository
+        Repository <|-- ClaimRepository
+        Repository <|-- NotificationRepository
+        Repository <|-- AdminCaseRepository
+    
+        UserRepository <|-- InMemoryUserRepository
+        ItemReportRepository <|-- InMemoryItemReportRepository
+        ClaimRepository <|-- InMemoryClaimRepository
+        NotificationRepository <|-- InMemoryNotificationRepository
+        AdminCaseRepository <|-- InMemoryAdminCaseRepository
+    
+        UserRepository <|-- DatabaseUserRepository
+        ItemReportRepository <|-- DatabaseItemReportRepository
+    
+        RepositoryFactory ..> InMemoryUserRepository : creates
+        RepositoryFactory ..> InMemoryItemReportRepository : creates
+        RepositoryFactory ..> InMemoryClaimRepository : creates
+        RepositoryFactory ..> InMemoryNotificationRepository : creates
+        RepositoryFactory ..> InMemoryAdminCaseRepository : creates
+        RepositoryFactory ..> DatabaseUserRepository : future
+        RepositoryFactory ..> DatabaseItemReportRepository : future
+    
     ItemReport "1" --> "0..*" Notification : triggers
 ```
 
