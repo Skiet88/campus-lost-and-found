@@ -7,6 +7,14 @@
  */
 
 const User = require('./User');
+const RepositoryFactory = require('../factories/RepositoryFactory');
+
+function createRepositoryBundle(repositories = {}) {
+  return {
+    itemReportRepository: repositories.itemReportRepository || RepositoryFactory.getItemReportRepository('MEMORY'),
+    claimRepository: repositories.claimRepository || RepositoryFactory.getClaimRepository('MEMORY'),
+  };
+}
 
 class Student extends User {
   /**
@@ -15,13 +23,14 @@ class Student extends User {
    * @param {string} plainPassword
    * @param {string} studentNumber  e.g. "219012345"
    */
-  constructor(name, email, plainPassword, studentNumber) {
+  constructor(name, email, plainPassword, studentNumber, repositories = null) {
     super(name, email, plainPassword, 'STUDENT');
     if (!studentNumber) throw new Error('studentNumber is required for Student');
     this._studentId = this._userId;
     this._studentNumber = studentNumber;
     this._reportedItems = [];
     this._submittedClaims = [];
+    this._repositories = createRepositoryBundle(repositories || {});
   }
 
   // ── Getters ──────────────────────────────────────────────────────────────
@@ -40,6 +49,15 @@ class Student extends User {
   reportLostItem(itemId) {
     if (!itemId) throw new Error('itemId is required');
     this._reportedItems.push({ itemId, type: 'LOST', reportedAt: new Date() });
+    this._repositories.itemReportRepository.save({
+      itemId,
+      userId: this._studentId,
+      type: 'LOST',
+      title: 'Student reported lost item',
+      description: 'Recorded from student quick-action workflow',
+      category: 'GENERAL',
+      status: 'ACTIVE',
+    });
   }
 
   /**
@@ -49,6 +67,15 @@ class Student extends User {
   reportFoundItem(itemId) {
     if (!itemId) throw new Error('itemId is required');
     this._reportedItems.push({ itemId, type: 'FOUND', reportedAt: new Date() });
+    this._repositories.itemReportRepository.save({
+      itemId,
+      userId: this._studentId,
+      type: 'FOUND',
+      title: 'Student reported found item',
+      description: 'Recorded from student quick-action workflow',
+      category: 'GENERAL',
+      status: 'ACTIVE',
+    });
   }
 
   /**
@@ -58,6 +85,10 @@ class Student extends User {
   submitClaim(claimId) {
     if (!claimId) throw new Error('claimId is required');
     this._submittedClaims.push({ claimId, submittedAt: new Date() });
+    const claim = this._repositories.claimRepository.findById(claimId);
+    if (claim) {
+      this._repositories.claimRepository.save(claim);
+    }
   }
 
   /**

@@ -106,6 +106,40 @@ Key design decisions were to keep the domain classes focused on core behaviour, 
 | [REFLECTION_A9_DOMAIN.md](./REFLECTION_A9_DOMAIN.md) | Reflection on abstraction challenges, design trade-offs, and alignment with prior assignments |
  
 ---
+
+## From Class Diagrams to Code with All Creational Patterns
+
+This assignment turns the UML class diagram into working JavaScript source code in [`/src`](./src) and demonstrates all six creational patterns in [`/creational_patterns`](./creational_patterns). I chose JavaScript because the project stack is JavaScript-based throughout, with React.js on the frontend and Node.js + Express on the backend.
+
+Key design decisions were to keep the domain classes focused on core behaviour, use factory-style creation where object setup is repetitive, use Builder for step-by-step report construction, use Prototype for reusable report templates, and use Singleton for the shared database connection. The unit tests in [`/tests`](./tests) cover object creation and pattern behaviour, and [`CHANGELOG.md`](./CHANGELOG.md) tracks the assignment progress.
+
+
+| Document | Description |
+|----------|-------------|
+| [`/src`](./src) | Class implementations translated from the UML class diagram |
+| [`/creational_patterns`](./creational_patterns) | Implementations of Simple Factory, Factory Method, Abstract Factory, Builder, Prototype, and Singleton |
+| [`/tests`](./tests) | Unit tests validating object creation and pattern behaviour |
+| [CHANGELOG.md](./CHANGELOG.md) | Assignment 10 progress summary and current project snapshot |
+
+---
+
+## Implementing a Persistence Repository Layer
+
+This assignment adds a persistence repository layer on top of the existing CLAFS domain model. The repository code in [`/repositories`](./repositories) uses a generic base contract with entity-specific interfaces so storage details stay hidden behind a stable CRUD API. I used in-memory `Map`-based repositories first, then added [`/factories`](./factories) as the storage abstraction layer so the backend can be swapped later without changing calling code.
+
+The main design choice was Factory Pattern over a full DI container because the project is still small and the factory gives the same swap-ability with less setup. A future PostgreSQL backend is represented with stub implementations in [`/factories/stubs`](./factories/stubs), and the repository tests in [`/tests`](./tests) verify the in-memory CRUD behaviour and factory routing.
+
+
+
+| Document | Description |
+|----------|-------------|
+| [`/repositories`](./repositories) | Generic repository interface plus entity-specific repository contracts |
+| [`/repositories/inmemory`](./repositories/inmemory) | In-memory `Map` implementations for the domain repositories |
+| [`/factories`](./factories) | Repository factory and future storage stubs |
+| [`/tests`](./tests) | Repository CRUD and factory tests |
+| [CLASS_DIAGRAM.md](./CLASS_DIAGRAM.md) | Updated class diagram including repository interfaces, implementations, and factory |
+
+---
  
 ## Kanban Board
  
