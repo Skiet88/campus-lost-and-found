@@ -17,43 +17,43 @@ class Repository {
   /**
    * Persists a new entity or overwrites an existing one with the same ID.
    * @param {object} entity
-   * @returns {object} the saved entity
+   * @returns {Promise<object>} the saved entity
    */
-  save(entity) {
+  async save(entity) {
     throw new Error(`${this.constructor.name}.save() is not implemented`);
   }
 
   /**
    * Retrieves an entity by its unique identifier.
    * @param {string} id
-   * @returns {object|null} the entity, or null if not found
+   * @returns {Promise<object|null>} the entity, or null if not found
    */
-  findById(id) {
+  async findById(id) {
     throw new Error(`${this.constructor.name}.findById() is not implemented`);
   }
 
   /**
    * Returns all stored entities.
-   * @returns {object[]}
+   * @returns {Promise<object[]>}
    */
-  findAll() {
+  async findAll() {
     throw new Error(`${this.constructor.name}.findAll() is not implemented`);
   }
 
   /**
    * Removes the entity with the given ID.
    * @param {string} id
-   * @returns {boolean} true if deleted, false if not found
+   * @returns {Promise<boolean>} true if deleted, false if not found
    */
-  delete(id) {
+  async delete(id) {
     throw new Error(`${this.constructor.name}.delete() is not implemented`);
   }
 
   /**
    * Returns the total number of stored entities.
-   * @returns {number}
+   * @returns {Promise<number>}
    */
-  count() {
+  async count() {
     throw new Error(`${this.constructor.name}.count() is not implemented`);
   }
 
@@ -62,8 +62,9 @@ class Repository {
    * @param {string} id
    * @returns {boolean}
    */
-  exists(id) {
-    return this.findById(id) !== null;
+  async exists(id) {
+    const entity = await this.findById(id);
+    return entity !== null;
   }
 }
 

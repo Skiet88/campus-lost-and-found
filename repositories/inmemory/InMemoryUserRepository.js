@@ -23,7 +23,7 @@ class InMemoryUserRepository extends UserRepository {
 
   // ── Generic CRUD ─────────────────────────────────────────────────────
 
-  save(user) {
+  async save(user) {
     if (!user || !user.userId) {
       throw new Error('InMemoryUserRepository.save(): entity must have a userId');
     }
@@ -31,39 +31,39 @@ class InMemoryUserRepository extends UserRepository {
     return { ...user };
   }
 
-  findById(id) {
+  async findById(id) {
     const user = this._storage.get(id);
     return user ? { ...user } : null;
   }
 
-  findAll() {
+  async findAll() {
     return [...this._storage.values()].map(u => ({ ...u }));
   }
 
-  delete(id) {
+  async delete(id) {
     return this._storage.delete(id);
   }
 
-  count() {
+  async count() {
     return this._storage.size;
   }
 
   // ── Domain-Specific Queries ──────────────────────────────────────────
 
-  findByEmail(email) {
+  async findByEmail(email) {
     for (const user of this._storage.values()) {
       if (user.email === email) return { ...user };
     }
     return null;
   }
 
-  findByRole(role) {
+  async findByRole(role) {
     return [...this._storage.values()]
       .filter(u => u.role === role)
       .map(u => ({ ...u }));
   }
 
-  findVerified() {
+  async findVerified() {
     return [...this._storage.values()]
       .filter(u => u.isVerified === true)
       .map(u => ({ ...u }));

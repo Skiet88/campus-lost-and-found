@@ -1,0 +1,764 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Campus Lost & Found System (CLAFS) API",
+    "version": "1.0.0",
+    "description": "RESTful API for CLAFS — a digital lost-and-found platform for university campuses. Exposes endpoints for user management, item report CRUD, and the full claim workflow (submit → review → approve/reject).\n\nAll responses follow a consistent envelope:\n- **success**: `{ status: 'success', data: <payload> }`\n- **list**: `{ status: 'success', count: N, data: [<payload>] }`\n- **error**: `{ status: 'error', error: '<ErrorType>', message: '<detail>' }`",
+    "contact": {
+      "name": "Mlungisi Mbuyazi",
+      "email": "admin@cput.ac.za"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    }
+  ],
+  "tags": [
+    { "name": "Users",       "description": "User registration, authentication, and profile management" },
+    { "name": "Reports",     "description": "Lost and found item report CRUD and workflow" },
+    { "name": "Claims",      "description": "Claim submission, review, approval, and rejection" },
+    { "name": "System",      "description": "Health check and API metadata" }
+  ],
+  "paths": {
+
+    "/api/health": {
+      "get": {
+        "tags": ["System"],
+        "summary": "Health check",
+        "description": "Returns API status and current server timestamp.",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status":    { "type": "string", "example": "ok" },
+                    "service":   { "type": "string", "example": "CLAFS API" },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/docs": {
+      "get": {
+        "tags": ["System"],
+        "summary": "OpenAPI specification",
+        "description": "Returns this OpenAPI 3.0 JSON document.",
+        "operationId": "getDocs",
+        "responses": {
+          "200": { "description": "OpenAPI document" }
+        }
+      }
+    },
+
+    "/api/users/register": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Register a new user",
+        "description": "Creates a new user account. Email must be a valid university address (e.g. `@cput.ac.za`, `@edu`, `@ac.uk`). Email is immutable after registration.",
+        "operationId": "registerUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" },
+              "example": {
+                "name": "Thabo Nkosi",
+                "email": "thabo@cput.ac.za",
+                "password": "SecurePass1",
+                "role": "STUDENT"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        }
+      }
+    },
+
+    "/api/users/login": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Login",
+        "description": "Authenticates a user by email and password. Accounts are locked for 15 minutes after 3 consecutive failed attempts.",
+        "operationId": "loginUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/AuthError" }
+        }
+      }
+    },
+
+    "/api/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get all users",
+        "operationId": "getAllUsers",
+        "responses": {
+          "200": {
+            "description": "List of all users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "data":   { "type": "array", "items": { "$ref": "#/components/schemas/User" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/users/role/{role}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get users by role",
+        "operationId": "getUsersByRole",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "enum": ["STUDENT", "LECTURER", "ADMIN"] }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Filtered user list" },
+          "400": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+
+    "/api/users/{userId}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get a user by ID",
+        "operationId": "getUserById",
+        "parameters": [{ "$ref": "#/components/parameters/userId" }],
+        "responses": {
+          "200": { "description": "User found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserResponse" } } } },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update user profile",
+        "description": "Updates name and/or role. Email cannot be changed after registration.",
+        "operationId": "updateUser",
+        "parameters": [{ "$ref": "#/components/parameters/userId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "minLength": 2 },
+                  "role": { "type": "string", "enum": ["STUDENT", "LECTURER", "ADMIN"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profile updated" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete a user",
+        "operationId": "deleteUser",
+        "parameters": [{ "$ref": "#/components/parameters/userId" }],
+        "responses": {
+          "200": { "description": "User deleted" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+
+    "/api/users/{userId}/verify": {
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Verify user email",
+        "operationId": "verifyEmail",
+        "parameters": [{ "$ref": "#/components/parameters/userId" }],
+        "responses": {
+          "200": { "description": "Email verified" },
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        }
+      }
+    },
+
+    "/api/reports": {
+      "post": {
+        "tags": ["Reports"],
+        "summary": "Submit a new item report",
+        "description": "Creates a LOST or FOUND report. An AdminCase is automatically opened. Reports active for 30+ days with no activity are auto-expired.",
+        "operationId": "submitReport",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SubmitReportRequest" },
+              "example": {
+                "userId": "user-uuid-here",
+                "type": "FOUND",
+                "title": "Blue JanSport Backpack",
+                "description": "Dark blue backpack with broken front zip found near library entrance",
+                "category": "BAGS",
+                "location": "Library, 2nd Floor",
+                "dateLostFound": "2026-05-01"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Report created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ItemReportResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      },
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get all item reports",
+        "description": "Returns all reports. Triggers auto-expiry of stale ACTIVE reports. Supports filtering by status, type, or category.",
+        "operationId": "getAllReports",
+        "parameters": [
+          { "name": "status",   "in": "query", "schema": { "type": "string", "enum": ["ACTIVE", "RESOLVED", "EXPIRED"] } },
+          { "name": "type",     "in": "query", "schema": { "type": "string", "enum": ["LOST", "FOUND"] } },
+          { "name": "category", "in": "query", "schema": { "type": "string", "enum": ["BAGS", "ELECTRONICS", "ID DOCUMENTS", "CLOTHING", "KEYS", "BOOKS", "JEWELLERY", "OTHER"] } }
+        ],
+        "responses": {
+          "200": { "description": "List of reports" },
+          "400": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+
+    "/api/reports/user/{userId}": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get reports by user",
+        "operationId": "getReportsByUser",
+        "parameters": [{ "$ref": "#/components/parameters/userId" }],
+        "responses": {
+          "200": { "description": "Reports for user" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+
+    "/api/reports/{itemId}": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Get a single report",
+        "operationId": "getReportById",
+        "parameters": [{ "$ref": "#/components/parameters/itemId" }],
+        "responses": {
+          "200": { "description": "Report found" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      },
+      "put": {
+        "tags": ["Reports"],
+        "summary": "Update a report",
+        "description": "Only the original submitter can update their report. RESOLVED and EXPIRED reports cannot be updated.",
+        "operationId": "updateReport",
+        "parameters": [{ "$ref": "#/components/parameters/itemId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["requestingUserId"],
+                "properties": {
+                  "requestingUserId": { "type": "string" },
+                  "title":            { "type": "string" },
+                  "description":      { "type": "string" },
+                  "location":         { "type": "string" },
+                  "category":         { "type": "string" },
+                  "imageUrl":         { "type": "string", "nullable": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Report updated" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        }
+      },
+      "delete": {
+        "tags": ["Reports"],
+        "summary": "Delete a report",
+        "description": "Only the original submitter or an ADMIN can delete a report.",
+        "operationId": "deleteReport",
+        "parameters": [{ "$ref": "#/components/parameters/itemId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["requestingUserId"],
+                "properties": { "requestingUserId": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Report deleted" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+
+    "/api/reports/{itemId}/resolve": {
+      "patch": {
+        "tags": ["Reports"],
+        "summary": "Mark report as resolved (Admin only)",
+        "operationId": "resolveReport",
+        "parameters": [{ "$ref": "#/components/parameters/itemId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["adminId"],
+                "properties": { "adminId": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Report resolved" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        }
+      }
+    },
+
+    "/api/claims": {
+      "post": {
+        "tags": ["Claims"],
+        "summary": "Submit a claim",
+        "description": "Submits a claim for a FOUND item. Rules: one claim per user per item; proof must be ≥ 30 characters; cannot claim own report; report must be ACTIVE.",
+        "operationId": "submitClaim",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SubmitClaimRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Claim submitted" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        }
+      },
+      "get": {
+        "tags": ["Claims"],
+        "summary": "Get all claims",
+        "operationId": "getAllClaims",
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["PENDING", "UNDER_REVIEW", "APPROVED", "REJECTED"] } }
+        ],
+        "responses": {
+          "200": { "description": "List of claims" }
+        }
+      }
+    },
+
+    "/api/claims/item/{itemId}": {
+      "get": {
+        "tags": ["Claims"],
+        "summary": "Get claims for a specific report",
+        "operationId": "getClaimsByItem",
+        "parameters": [{ "$ref": "#/components/parameters/itemId" }],
+        "responses": {
+          "200": { "description": "Claims for the item" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+
+    "/api/claims/user/{claimantId}": {
+      "get": {
+        "tags": ["Claims"],
+        "summary": "Get claims by a specific user",
+        "operationId": "getClaimsByUser",
+        "parameters": [
+          { "name": "claimantId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Claims by user" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      }
+    },
+
+    "/api/claims/{claimId}": {
+      "get": {
+        "tags": ["Claims"],
+        "summary": "Get a single claim",
+        "operationId": "getClaimById",
+        "parameters": [{ "$ref": "#/components/parameters/claimId" }],
+        "responses": {
+          "200": { "description": "Claim found" },
+          "404": { "$ref": "#/components/responses/NotFoundError" }
+        }
+      },
+      "delete": {
+        "tags": ["Claims"],
+        "summary": "Cancel a claim",
+        "description": "Claimant can cancel their own PENDING or UNDER_REVIEW claim.",
+        "operationId": "cancelClaim",
+        "parameters": [{ "$ref": "#/components/parameters/claimId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["claimantId"],
+                "properties": { "claimantId": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Claim cancelled" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        }
+      }
+    },
+
+    "/api/claims/{claimId}/review": {
+      "patch": {
+        "tags": ["Claims"],
+        "summary": "Move claim to UNDER_REVIEW (Admin only)",
+        "operationId": "reviewClaim",
+        "parameters": [{ "$ref": "#/components/parameters/claimId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["adminId"],
+                "properties": { "adminId": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Claim under review" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        }
+      }
+    },
+
+    "/api/claims/{claimId}/approve": {
+      "patch": {
+        "tags": ["Claims"],
+        "summary": "Approve a claim (Admin only)",
+        "description": "Approves the claim. All other claims on the same item are automatically rejected. The linked ItemReport is marked RESOLVED.",
+        "operationId": "approveClaim",
+        "parameters": [{ "$ref": "#/components/parameters/claimId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["adminId"],
+                "properties": { "adminId": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Claim approved" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        }
+      }
+    },
+
+    "/api/claims/{claimId}/reject": {
+      "patch": {
+        "tags": ["Claims"],
+        "summary": "Reject a claim (Admin only)",
+        "description": "Rejects the claim. A rejection reason of at least 5 characters is mandatory. The claimant is notified.",
+        "operationId": "rejectClaim",
+        "parameters": [{ "$ref": "#/components/parameters/claimId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["adminId", "rejectionReason"],
+                "properties": {
+                  "adminId":         { "type": "string" },
+                  "rejectionReason": { "type": "string", "minLength": 5 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Claim rejected" },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "403": { "$ref": "#/components/responses/ForbiddenError" },
+          "404": { "$ref": "#/components/responses/NotFoundError" },
+          "409": { "$ref": "#/components/responses/ConflictError" }
+        }
+      }
+    }
+  },
+
+  "components": {
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["name", "email", "password", "role"],
+        "properties": {
+          "name":     { "type": "string", "minLength": 2, "example": "Thabo Nkosi" },
+          "email":    { "type": "string", "format": "email", "example": "thabo@cput.ac.za" },
+          "password": { "type": "string", "minLength": 8, "example": "SecurePass1" },
+          "role":     { "type": "string", "enum": ["STUDENT", "LECTURER", "ADMIN"] }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email":    { "type": "string", "format": "email" },
+          "password": { "type": "string" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "userId":              { "type": "string", "format": "uuid" },
+          "name":                { "type": "string" },
+          "email":               { "type": "string", "format": "email" },
+          "role":                { "type": "string", "enum": ["STUDENT", "LECTURER", "ADMIN"] },
+          "isVerified":          { "type": "boolean" },
+          "failedLoginAttempts": { "type": "integer" },
+          "lockedUntil":         { "type": "string", "format": "date-time", "nullable": true },
+          "createdAt":           { "type": "string", "format": "date-time" }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "success" },
+          "data":   { "$ref": "#/components/schemas/User" }
+        }
+      },
+      "SubmitReportRequest": {
+        "type": "object",
+        "required": ["userId", "type", "title", "description", "location", "dateLostFound"],
+        "properties": {
+          "userId":        { "type": "string", "format": "uuid" },
+          "type":          { "type": "string", "enum": ["LOST", "FOUND"] },
+          "title":         { "type": "string", "minLength": 3 },
+          "description":   { "type": "string", "minLength": 10 },
+          "category":      { "type": "string", "enum": ["BAGS", "ELECTRONICS", "ID DOCUMENTS", "CLOTHING", "KEYS", "BOOKS", "JEWELLERY", "OTHER"] },
+          "location":      { "type": "string", "minLength": 3 },
+          "dateLostFound": { "type": "string", "format": "date", "description": "Cannot be in the future" },
+          "imageUrl":      { "type": "string", "nullable": true }
+        }
+      },
+      "ItemReport": {
+        "type": "object",
+        "properties": {
+          "itemId":         { "type": "string", "format": "uuid" },
+          "userId":         { "type": "string", "format": "uuid" },
+          "type":           { "type": "string", "enum": ["LOST", "FOUND"] },
+          "title":          { "type": "string" },
+          "description":    { "type": "string" },
+          "category":       { "type": "string" },
+          "location":       { "type": "string" },
+          "dateLostFound":  { "type": "string", "format": "date" },
+          "imageUrl":       { "type": "string", "nullable": true },
+          "status":         { "type": "string", "enum": ["ACTIVE", "RESOLVED", "EXPIRED"] },
+          "createdAt":      { "type": "string", "format": "date-time" },
+          "lastActivityAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ItemReportResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "success" },
+          "data":   { "$ref": "#/components/schemas/ItemReport" }
+        }
+      },
+      "SubmitClaimRequest": {
+        "type": "object",
+        "required": ["itemId", "claimantId", "proofDescription"],
+        "properties": {
+          "itemId":           { "type": "string", "format": "uuid" },
+          "claimantId":       { "type": "string", "format": "uuid" },
+          "proofDescription": { "type": "string", "minLength": 30 }
+        }
+      },
+      "Claim": {
+        "type": "object",
+        "properties": {
+          "claimId":          { "type": "string", "format": "uuid" },
+          "itemId":           { "type": "string", "format": "uuid" },
+          "claimantId":       { "type": "string", "format": "uuid" },
+          "proofDescription": { "type": "string" },
+          "status":           { "type": "string", "enum": ["PENDING", "UNDER_REVIEW", "APPROVED", "REJECTED"] },
+          "rejectionReason":  { "type": "string", "nullable": true },
+          "createdAt":        { "type": "string", "format": "date-time" },
+          "resolvedAt":       { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status":  { "type": "string", "example": "error" },
+          "error":   { "type": "string", "example": "ValidationError" },
+          "message": { "type": "string" }
+        }
+      }
+    },
+
+    "parameters": {
+      "userId": {
+        "name": "userId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string" },
+        "description": "UUID of the user"
+      },
+      "itemId": {
+        "name": "itemId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string" },
+        "description": "UUID of the item report"
+      },
+      "claimId": {
+        "name": "claimId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "string" },
+        "description": "UUID of the claim"
+      }
+    },
+
+    "responses": {
+      "ValidationError": {
+        "description": "Invalid input data",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": { "status": "error", "error": "ValidationError", "message": "Title is required and must be at least 3 characters" }
+          }
+        }
+      },
+      "NotFoundError": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": { "status": "error", "error": "NotFoundError", "message": "ItemReport \"abc-123\" not found" }
+          }
+        }
+      },
+      "ConflictError": {
+        "description": "Conflict with current resource state",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": { "status": "error", "error": "ConflictError", "message": "You have already submitted a claim for this item" }
+          }
+        }
+      },
+      "ForbiddenError": {
+        "description": "Insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": { "status": "error", "error": "ForbiddenError", "message": "Only an ADMIN can perform this action" }
+          }
+        }
+      },
+      "AuthError": {
+        "description": "Authentication failed",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": { "status": "error", "error": "AuthError", "message": "Invalid email or password" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -29,9 +29,14 @@ class ItemReport {
    * @param {string|null} imageUrl
    */
   constructor(userId, type, title, description, category, location, dateLostFound, imageUrl = null) {
-    this._validateRequired({ userId, type, title, description, location, dateLostFound });
-
-    if (!VALID_TYPES.includes(type)) throw new Error(`type must be LOST or FOUND`);
+    // Structural validation only (required fields)
+    // Business rule validation (field length, enum values, etc.) enforced by ItemReportService
+    if (!userId) throw new Error('userId is required');
+    if (!type) throw new Error('type is required');
+    if (!title) throw new Error('title is required');
+    if (!description) throw new Error('description is required');
+    if (!location) throw new Error('location is required');
+    if (!dateLostFound) throw new Error('dateLostFound is required');
 
     this._itemId = uuidv4();
     this._userId = userId;
@@ -68,13 +73,6 @@ class ItemReport {
    * Submits the report (validates required fields again).
    */
   submitReport() {
-    this._validateRequired({
-      userId: this._userId,
-      title: this._title,
-      description: this._description,
-      location: this._location,
-      dateLostFound: this._dateLostFound,
-    });
     this._lastActivityAt = new Date();
     return this.toJSON();
   }
@@ -174,14 +172,6 @@ class ItemReport {
   }
 
   // ── Private ───────────────────────────────────────────────────────────────
-
-  _validateRequired(fields) {
-    for (const [key, val] of Object.entries(fields)) {
-      if (val === null || val === undefined || val === '') {
-        throw new Error(`${key} is required`);
-      }
-    }
-  }
 }
 
 module.exports = ItemReport;

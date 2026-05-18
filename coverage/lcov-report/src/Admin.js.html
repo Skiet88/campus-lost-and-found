@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.5% </span>
+                <span class="strong">86.95% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>21/24</span>
+                <span class='fraction'>20/23</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">86.66% </span>
+                <span class="strong">92.85% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>13/15</span>
+                <span class='fraction'>13/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">72.72% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>9/12</span>
+                <span class='fraction'>8/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.5% </span>
+                <span class="strong">90.9% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>21/24</span>
+                <span class='fraction'>20/22</span>
             </div>
         
             
@@ -159,15 +159,7 @@
 <a name='L94'></a><a href='#L94'>94</a>
 <a name='L95'></a><a href='#L95'>95</a>
 <a name='L96'></a><a href='#L96'>96</a>
-<a name='L97'></a><a href='#L97'>97</a>
-<a name='L98'></a><a href='#L98'>98</a>
-<a name='L99'></a><a href='#L99'>99</a>
-<a name='L100'></a><a href='#L100'>100</a>
-<a name='L101'></a><a href='#L101'>101</a>
-<a name='L102'></a><a href='#L102'>102</a>
-<a name='L103'></a><a href='#L103'>103</a>
-<a name='L104'></a><a href='#L104'>104</a>
-<a name='L105'></a><a href='#L105'>105</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L97'></a><a href='#L97'>97</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -177,13 +169,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -229,8 +214,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -281,27 +265,20 @@
  */
 &nbsp;
 const User = require('./User');
-const RepositoryFactory = require('../factories/RepositoryFactory');
-&nbsp;
-function createRepositoryBundle(repositories = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
-  return {
-    itemReportRepository: repositories.itemReportRepository || RepositoryFactory.getItemReportRepository('MEMORY'),
-    claimRepository: repositories.claimRepository || RepositoryFactory.getClaimRepository('MEMORY'),
-    adminCaseRepository: repositories.adminCaseRepository || RepositoryFactory.getAdminCaseRepository('MEMORY'),
-  };
-}
 &nbsp;
 class Admin extends User {
   /**
    * @param {string} name
    * @param {string} email
    * @param {string} plainPassword
+   * @param {object} [repositories] Optional repositories object { itemReportRepository, claimRepository, adminCaseRepository }
+   *                                If not provided, repository-based methods will be no-ops
    */
   constructor(name, email, plainPassword, repositories = null) {
     super(name, email, plainPassword, 'ADMIN');
     this._adminId = this._userId; // alias
     this._managedCases = [];
-    this._repositories = createRepositoryBundle(repositories || {});
+    this._repositories = repositories || {};
   }
 &nbsp;
   // ── Getters ──────────────────────────────────────────────────────────────
@@ -316,7 +293,7 @@ class Admin extends User {
    * Placeholder for controller integration.
    */
   manageItemReports() {
-    const itemReports = this._repositories.itemReportRepository.findAll();
+    const itemReports = this._repositories.itemReportRepository?.findAll() || [];
     return { adminId: this._adminId, action: 'MANAGE_ITEM_REPORTS', reportCount: itemReports.length, itemReports };
   }
 &nbsp;
@@ -324,7 +301,7 @@ class Admin extends User {
    * Returns all claims for review.
    */
   manageClaims() {
-    const claims = this._repositories.claimRepository.findAll();
+    const claims = this._repositories.claimRepository?.findAll() || [];
     return { adminId: this._adminId, action: 'MANAGE_CLAIMS', claimCount: claims.length, claims };
   }
 &nbsp;
@@ -332,9 +309,8 @@ class Admin extends User {
    * Returns dashboard summary data (stub for controller).
    */
   viewDashboard() {
-    const repositoryManagedCases = this._repositories.adminCaseRepository
-      .findAll()
-      .filter(<span class="fstat-no" title="function not covered" >ad</span>minCase =&gt; <span class="cstat-no" title="statement not covered" >adminCase.adminId === this._adminId)</span>;
+    const allCases = this._repositories.adminCaseRepository?.findAll() || [];
+    const repositoryManagedCases = allCases.filter(<span class="fstat-no" title="function not covered" >ad</span>minCase =&gt; <span class="cstat-no" title="statement not covered" >adminCase.adminId === this._adminId)</span>;
 &nbsp;
     return {
       adminId: this._adminId,
@@ -382,7 +358,7 @@ module.exports = Admin;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-10T23:40:36.074Z
+                at 2026-05-17T23:11:09.692Z
             </div>
         <script src="../prettify.js"></script>
         <script>

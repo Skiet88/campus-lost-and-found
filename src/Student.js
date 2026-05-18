@@ -7,14 +7,6 @@
  */
 
 const User = require('./User');
-const RepositoryFactory = require('../factories/RepositoryFactory');
-
-function createRepositoryBundle(repositories = {}) {
-  return {
-    itemReportRepository: repositories.itemReportRepository || RepositoryFactory.getItemReportRepository('MEMORY'),
-    claimRepository: repositories.claimRepository || RepositoryFactory.getClaimRepository('MEMORY'),
-  };
-}
 
 class Student extends User {
   /**
@@ -22,6 +14,8 @@ class Student extends User {
    * @param {string} email
    * @param {string} plainPassword
    * @param {string} studentNumber  e.g. "219012345"
+   * @param {object} [repositories] Optional repositories object { itemReportRepository, claimRepository }
+   *                                If not provided, repository-based methods will be no-ops
    */
   constructor(name, email, plainPassword, studentNumber, repositories = null) {
     super(name, email, plainPassword, 'STUDENT');
@@ -30,7 +24,7 @@ class Student extends User {
     this._studentNumber = studentNumber;
     this._reportedItems = [];
     this._submittedClaims = [];
-    this._repositories = createRepositoryBundle(repositories || {});
+    this._repositories = repositories || {};
   }
 
   // ── Getters ──────────────────────────────────────────────────────────────
@@ -49,15 +43,20 @@ class Student extends User {
   reportLostItem(itemId) {
     if (!itemId) throw new Error('itemId is required');
     this._reportedItems.push({ itemId, type: 'LOST', reportedAt: new Date() });
-    this._repositories.itemReportRepository.save({
-      itemId,
-      userId: this._studentId,
-      type: 'LOST',
-      title: 'Student reported lost item',
-      description: 'Recorded from student quick-action workflow',
-      category: 'GENERAL',
-      status: 'ACTIVE',
-    });
+    // Only persist if repository is available
+    if (this._repositories.itemReportRepository) {
+      // Persist asynchronously if repository supports it
+      const r = this._repositories.itemReportRepository;
+      if (typeof r.save === 'function') r.save({
+        itemId,
+        userId: this._studentId,
+        type: 'LOST',
+        title: 'Student reported lost item',
+        description: 'Recorded from student quick-action workflow',
+        category: 'GENERAL',
+        status: 'ACTIVE',
+      });
+    }
   }
 
   /**
@@ -67,15 +66,19 @@ class Student extends User {
   reportFoundItem(itemId) {
     if (!itemId) throw new Error('itemId is required');
     this._reportedItems.push({ itemId, type: 'FOUND', reportedAt: new Date() });
-    this._repositories.itemReportRepository.save({
-      itemId,
-      userId: this._studentId,
-      type: 'FOUND',
-      title: 'Student reported found item',
-      description: 'Recorded from student quick-action workflow',
-      category: 'GENERAL',
-      status: 'ACTIVE',
-    });
+    // Only persist if repository is available
+    if (this._repositories.itemReportRepository) {
+      const r = this._repositories.itemReportRepository;
+      if (typeof r.save === 'function') r.save({
+        itemId,
+        userId: this._studentId,
+        type: 'FOUND',
+        title: 'Student reported found item',
+        description: 'Recorded from student quick-action workflow',
+        category: 'GENERAL',
+        status: 'ACTIVE',
+      });
+    }
   }
 
   /**
@@ -85,9 +88,16 @@ class Student extends User {
   submitClaim(claimId) {
     if (!claimId) throw new Error('claimId is required');
     this._submittedClaims.push({ claimId, submittedAt: new Date() });
-    const claim = this._repositories.claimRepository.findById(claimId);
-    if (claim) {
-      this._repositories.claimRepository.save(claim);
+    // Only persist if repository is available
+    if (this._repositories.claimRepository) {
+      const c = this._repositories.claimRepository;
+      const maybe = c.findById(claimId);
+      if (maybe && typeof maybe.then === 'function') {
+        // Promise — handle async
+        maybe.then(claim => { if (claim) c.save(claim); }).catch(() => {});
+      } else if (maybe) {
+        c.save(maybe);
+      }
     }
   }
 

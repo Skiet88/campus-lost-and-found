@@ -23,16 +23,16 @@ class Claim {
    * @param {string} proofDescription
    */
   constructor(itemId, claimantId, proofDescription) {
+    // Structural validation only (required fields)
+    // Business rule validation (min length, etc.) enforced by ClaimService
     if (!itemId) throw new Error('itemId is required');
     if (!claimantId) throw new Error('claimantId is required');
-    if (!proofDescription || proofDescription.trim().length < MIN_PROOF_LENGTH) {
-      throw new Error(`proofDescription must be at least ${MIN_PROOF_LENGTH} characters`);
-    }
+    if (proofDescription === undefined) throw new Error('proofDescription is required');
 
     this._claimId = uuidv4();
     this._itemId = itemId;
     this._claimantId = claimantId;
-    this._proofDescription = proofDescription.trim();
+    this._proofDescription = proofDescription;
     this._status = 'PENDING';
     this._rejectionReason = null;
     this._createdAt = new Date();

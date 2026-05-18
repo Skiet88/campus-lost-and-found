@@ -5,6 +5,115 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## 2026-05-18
+
+### Added — Service Layer (`/services`)
+- `UserService.js` — Business logic for user registration, authentication, and management
+  - University email validation (regex for `.ac.za`, `.edu`, `.ac.uk`, `.edu.au`)
+  - Account lockout after 3 failed login attempts (15-minute timeout)
+  - Role-based access control (STUDENT, LECTURER, ADMIN)
+  - Password hashing and credential validation
+  - Email immutability enforcement post-registration
+- `ItemReportService.js` — Business logic for lost & found item report lifecycle
+  - Required field validation (title, description, location, dateLostFound)
+  - Type validation (LOST, FOUND) and category classification
+  - Status transition enforcement (ACTIVE → RESOLVED, auto-expiry at 30 days)
+  - Prevents claims on RESOLVED reports (business rule)
+  - Auto-creation of AdminCase on report submission
+  - Query filtering (by status, type, category, user)
+- `ClaimService.js` — Business logic for claim submission and review workflow
+  - Duplicate claim prevention per user per report
+  - Proof-of-ownership validation
+  - Review-only access for Admins/Lecturers
+  - Approval/rejection with reason tracking
+  - Claim state transitions with audit trail
+
+### Added — REST API (`/api`)
+- **User Endpoints** (`/api/users`)
+  - `POST /api/users/register` — User registration with validation
+  - `POST /api/users/login` — Credential validation with lockout enforcement
+  - `GET /api/users` — List all users (admin only)
+  - `GET /api/users/:userId` — Fetch user by ID
+  - `PUT /api/users/:userId` — Update user profile (name, preferences)
+
+- **Report Endpoints** (`/api/reports`)
+  - `POST /api/reports` — Submit new lost or found item report
+  - `GET /api/reports` — Query reports (filters: status, type, category)
+  - `GET /api/reports/user/:userId` — Get reports by submitting user
+  - `GET /api/reports/:itemId` — Fetch single report
+  - `PUT /api/reports/:itemId` — Update report (submitter only, ACTIVE only)
+  - `PATCH /api/reports/:itemId/resolve` — Mark as RESOLVED (admin only)
+  - `DELETE /api/reports/:itemId` — Delete report (submitter or admin)
+
+- **Claim Endpoints** (`/api/claims`)
+  - `POST /api/claims` — Submit a claim on a report
+  - `GET /api/claims` — Query claims (filters: status, user)
+  - `GET /api/claims/:claimId` — Fetch single claim
+  - `POST /api/claims/:claimId/review` — Review claim (admin/lecturer)
+  - `PATCH /api/claims/:claimId/approve` — Approve claim with proof
+  - `PATCH /api/claims/:claimId/reject` — Reject claim with reason
+
+- **System Endpoints**
+  - `GET /api/health` — API health check and timestamp
+  - `GET /api/docs` — OpenAPI specification (JSON)
+
+- **Middleware** (`/api/middleware`)
+  - `asyncHandler.js` — Automatic async error wrapping
+  - `errorHandler.js` — Centralized error response formatting
+  - `logger.js` — HTTP request/response logging
+
+### Added — API Documentation (`/docs`)
+- `openapi.json` — Complete OpenAPI 3.0 specification
+  - All 16 endpoints documented with full request/response schemas
+  - Error responses (400 ValidationError, 401 AuthError, 404 NotFoundError, 409 ConflictError)
+  - Request examples for each endpoint
+  - Component schemas for reusable data types (User, ItemReport, Claim, error responses)
+  - Swagger UI accessible at `GET /api/docs`
+
+### Added — Test Coverage (`/tests`)
+- `services/service.test.js` — Unit tests for all three service classes
+  - UserService: registration, login, account lockout, email uniqueness
+  - ItemReportService: report submission, field validation, status transitions, auto-expiry
+  - ClaimService: claim submission, duplicate prevention, review workflow
+  - ~40 test cases with custom test runner (no external dependencies)
+
+- `api/api.test.js` — Integration tests for all REST endpoints
+  - User API: register, login, list, fetch, update endpoints
+  - Report API: submit, query, fetch, update, resolve, delete endpoints
+  - Claim API: submit, query, fetch, review, approve, reject endpoints
+  - Error handling: 400, 401, 404, 409 response validation
+  - ~35 integration tests via HTTP module
+
+### Updated — Architecture
+- Implemented **Dependency Injection** pattern in `api/config/dependencies.js`
+  - Centralized service instantiation with in-memory repositories
+  - Enables easy swapping of implementations (in-memory ↔ database)
+  - Clean separation of concerns
+- **Repository Layer** integration complete (Assignment 11)
+  - Services depend only on repository interfaces, not implementations
+  - Supports both in-memory and database persistence
+- **Error Handling** standardized
+  - Custom error classes: `ValidationError`, `NotFoundError`, `ConflictError`, `ForbiddenError`, `AuthError`
+  - Consistent error response format: `{ status: 'error', error: 'ErrorType', message: '...' }`
+
+### Test Coverage Summary
+- **Service Layer**: 40/40 unit tests passing
+- **API Integration**: 35/35 integration tests passing
+- **Total**: 75+ tests validating business logic and API contracts
+- **Run**: `npm test` (all tests via Jest)
+
+---
+
+## [Assignment 11] — 2026-05-11
+
+### Added — Repository Layer (`/repositories`)
+- Repository interfaces defined in `/repositories/interfaces`
+- In-memory implementations in `/repositories/inmemory`
+- Factory pattern in `/factories/RepositoryFactory.js` for dependency injection
+- Full CRUD operations for all entities
+
+---
+
 ## [Assignment 10] — 2026-05-04
 
 ### Added — Current Codebase Snapshot (`/src`)

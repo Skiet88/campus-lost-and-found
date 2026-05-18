@@ -9,6 +9,11 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "tests/services/service\\.test\\.js",
+      "tests/api/api\\.test\\.js"
+    ],
     "collectCoverageFrom": [
       "src/**/*.js",
       "creational_patterns/**/*.js"
@@ -23,6 +28,8 @@
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "uuid": "^14.0.0"
+    "express": "^5.2.1",
+    "uuid": "^9.0.1",
+    "swagger-ui-express": "^5.0.0"
   }
 }

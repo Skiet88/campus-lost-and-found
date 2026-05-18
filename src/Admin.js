@@ -8,27 +8,20 @@
  */
 
 const User = require('./User');
-const RepositoryFactory = require('../factories/RepositoryFactory');
-
-function createRepositoryBundle(repositories = {}) {
-  return {
-    itemReportRepository: repositories.itemReportRepository || RepositoryFactory.getItemReportRepository('MEMORY'),
-    claimRepository: repositories.claimRepository || RepositoryFactory.getClaimRepository('MEMORY'),
-    adminCaseRepository: repositories.adminCaseRepository || RepositoryFactory.getAdminCaseRepository('MEMORY'),
-  };
-}
 
 class Admin extends User {
   /**
    * @param {string} name
    * @param {string} email
    * @param {string} plainPassword
+   * @param {object} [repositories] Optional repositories object { itemReportRepository, claimRepository, adminCaseRepository }
+   *                                If not provided, repository-based methods will be no-ops
    */
   constructor(name, email, plainPassword, repositories = null) {
     super(name, email, plainPassword, 'ADMIN');
     this._adminId = this._userId; // alias
     this._managedCases = [];
-    this._repositories = createRepositoryBundle(repositories || {});
+    this._repositories = repositories || {};
   }
 
   // ── Getters ──────────────────────────────────────────────────────────────
@@ -43,7 +36,7 @@ class Admin extends User {
    * Placeholder for controller integration.
    */
   manageItemReports() {
-    const itemReports = this._repositories.itemReportRepository.findAll();
+    const itemReports = this._repositories.itemReportRepository?.findAll() || [];
     return { adminId: this._adminId, action: 'MANAGE_ITEM_REPORTS', reportCount: itemReports.length, itemReports };
   }
 
@@ -51,7 +44,7 @@ class Admin extends User {
    * Returns all claims for review.
    */
   manageClaims() {
-    const claims = this._repositories.claimRepository.findAll();
+    const claims = this._repositories.claimRepository?.findAll() || [];
     return { adminId: this._adminId, action: 'MANAGE_CLAIMS', claimCount: claims.length, claims };
   }
 
@@ -59,9 +52,8 @@ class Admin extends User {
    * Returns dashboard summary data (stub for controller).
    */
   viewDashboard() {
-    const repositoryManagedCases = this._repositories.adminCaseRepository
-      .findAll()
-      .filter(adminCase => adminCase.adminId === this._adminId);
+    const allCases = this._repositories.adminCaseRepository?.findAll() || [];
+    const repositoryManagedCases = allCases.filter(adminCase => adminCase.adminId === this._adminId);
 
     return {
       adminId: this._adminId,
