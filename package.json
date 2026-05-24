@@ -24,12 +24,14 @@
   "author": "Mlungisi Mbuyazi",
   "license": "ISC",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.4.0",
     "jest": "^29.0.0"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "express": "^5.2.1",
-    "uuid": "^9.0.1",
-    "swagger-ui-express": "^5.0.0"
+    "swagger-ui-express": "^5.0.0",
+    "uuid": "^9.0.1"
   }
 }
