@@ -115,21 +115,21 @@ jobs:
         run: npm rebuild bcrypt --build-from-source || true
 
       - name: Run all tests with coverage
-        run: npm test -- --coverage --coverageReporters=lcov --coverageReporters=text-summary --forceExit
+        run: npm test -- --coverage --coverageReporters=lcov --coverageReporters=text-summary --coverageReporters=json-summary --forceExit
         env:
           NODE_ENV: test
           CI: true
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
-        if: matrix.node-version == '20.x'    # Only upload once
+        if: always()
         with:
-          name: coverage-report
+          name: coverage-report-${{ matrix.node-version }}
           path: coverage/
           retention-days: 14
 
       - name: Coverage summary (print to log)
-        if: matrix.node-version == '20.x'
+        if: always()
         run: |
           echo "──────────────────────────────────────"
           echo "  CLAFS Test Coverage Summary"
