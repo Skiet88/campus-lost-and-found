@@ -3,30 +3,6 @@
 All notable changes to this project are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## 2026-05-24
-
-### Added — CI/CD Pipeline (`Assignment 13`)
-
-#### GitHub Actions Workflow (`.github/workflows/ci.yml`)
-- **Lint job** — ESLint runs on every push and PR across `src/`, `services/`, `repositories/`, `api/`, `factories/`, and `creational_patterns/`
-- **Test job** — Full Jest test suite with coverage on Node.js 18.x and 20.x in parallel; coverage report uploaded as artifact
-- **Security job** — `npm audit --audit-level=high` blocks any HIGH or CRITICAL vulnerabilities
-- **Release job** — Triggered only on merge to `main`; packages application into a versioned `.zip` artifact with `BUILD_INFO.json` metadata; retained for 90 days
-- Concurrency group configured to cancel redundant in-progress runs on the same branch
-- `bcrypt` native module rebuilt in CI environment (`npm rebuild bcrypt --build-from-source`)
-- Job dependency chain: lint → test + security → release (all gates must pass before release)
-
-#### Branch Protection (`PROTECTION.md`)
-- `PROTECTION.md` added explaining all branch protection rules with SDLC justification
-- Rules configured on `main`: require PR reviews (min 1), require status checks (lint + test + security), require up-to-date branches, disable direct pushes and force pushes
-
-#### Documentation Updates (`README.md`)
-- Added **CI/CD Pipeline** section explaining the full pipeline architecture
-- Added **Running Tests Locally** section with step-by-step commands
-- Added table of all test files and what each covers
-- Added **Branch Protection Rules** summary table
-- Added **Workflow File** reference table with artifact names and retention periods
-
 ---
 
 ## 2026-05-18
