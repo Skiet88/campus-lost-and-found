@@ -1,0 +1,291 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# .github/workflows/ci.yml
+# CLAFS — Campus Lost & Found System
+# CI/CD Pipeline — GitHub Actions
+#
+# Author:  Mlungisi Mbuyazi | CPUT ICT: Application Development 2026
+# Project: campus-lost-and-found
+#
+# Pipeline overview:
+#   ┌─────────────────────────────────────────────────────────────┐
+#   │  TRIGGER: push (any branch) │ pull_request → main           │
+#   ├─────────────────────────────────────────────────────────────┤
+#   │  JOB 1 – lint          : ESLint code style check            │
+#   │  JOB 2 – test          : Jest unit + integration tests      │
+#   │  JOB 3 – security      : npm audit (vulnerability scan)     │
+#   │  JOB 4 – release       : Build & upload artifact → main     │
+#   └─────────────────────────────────────────────────────────────┘
+#
+# Branch protection relies on jobs: lint, test, security
+# Release artifact is only produced when merged to main.
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: CLAFS CI/CD Pipeline
+
+# ── Triggers ──────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches:
+      - '**'          # Run CI on every branch push
+  pull_request:
+    branches:
+      - main          # Gate all PRs targeting main
+
+# ── Concurrency (cancel redundant runs on same branch) ────────────────────────
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ── Environment defaults ──────────────────────────────────────────────────────
+env:
+  NODE_VERSION: '20.x'
+  ARTIFACT_NAME: clafs-release
+
+# ══════════════════════════════════════════════════════════════════════════════
+# JOB 1 — LINT
+# Runs ESLint to enforce consistent code style across all JS files.
+# Fails fast so developers get feedback in under 30 seconds.
+# ══════════════════════════════════════════════════════════════════════════════
+jobs:
+  lint:
+    name: 🔍 Lint (ESLint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Install ESLint if not already a devDependency
+      - name: Install ESLint (if missing)
+        run: |
+          if ! npx eslint --version > /dev/null 2>&1; then
+            npm install --save-dev eslint
+          fi
+
+      # Create a minimal .eslintrc if the project doesn't have one yet
+      - name: Ensure ESLint config exists
+        run: |
+          if [ ! -f .eslintrc.json ] && [ ! -f .eslintrc.js ] && [ ! -f .eslintrc.yml ]; then
+            echo '{"env":{"node":true,"es2021":true},"extends":"eslint:recommended","rules":{"no-unused-vars":"warn","no-console":"off"}}' > .eslintrc.json
+          fi
+
+      - name: Run ESLint
+        run: npx eslint src/ services/ repositories/ api/ factories/ creational_patterns/ --ext .js --max-warnings 20
+        continue-on-error: false
+
+# ══════════════════════════════════════════════════════════════════════════════
+# JOB 2 — TEST
+# Runs the full Jest test suite (unit + integration).
+# Uploads coverage report as an artifact for review.
+# This job is registered as a required status check for main.
+# ══════════════════════════════════════════════════════════════════════════════
+  test:
+    name: 🧪 Test (Jest + Coverage)
+    runs-on: ubuntu-latest
+    needs: lint        # Only run if linting passes
+
+    strategy:
+      matrix:
+        node-version: ['18.x', '20.x']   # Verify compatibility on LTS + Current
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # bcrypt requires native bindings — rebuild for the CI environment
+      - name: Rebuild native modules (bcrypt)
+        run: npm rebuild bcrypt --build-from-source || true
+
+      - name: Run all tests with coverage
+        run: npm test -- --coverage --coverageReporters=lcov --coverageReporters=text-summary --coverageReporters=json-summary --forceExit
+        env:
+          NODE_ENV: test
+          CI: true
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report-${{ matrix.node-version }}
+          path: coverage/
+          retention-days: 14
+
+      - name: Coverage summary (print to log)
+        if: always()
+        run: |
+          echo "──────────────────────────────────────"
+          echo "  CLAFS Test Coverage Summary"
+          echo "──────────────────────────────────────"
+          cat coverage/coverage-summary.json 2>/dev/null || echo "(coverage-summary.json not found)"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# JOB 3 — SECURITY AUDIT
+# Runs npm audit to detect known vulnerabilities in dependencies.
+# High/critical severity vulnerabilities will fail the pipeline.
+# This also serves as a required status check for main.
+# ══════════════════════════════════════════════════════════════════════════════
+  security:
+    name: 🔒 Security Audit (npm audit)
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level=high
+        # Fails if any HIGH or CRITICAL vulnerabilities are found.
+        # MODERATE and LOW are reported but do not block the pipeline.
+
+      - name: Generate audit report
+        if: always()
+        run: npm audit --json > audit-report.json 2>/dev/null || true
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit-report
+          path: audit-report.json
+          retention-days: 30
+
+# ══════════════════════════════════════════════════════════════════════════════
+# JOB 4 — RELEASE ARTIFACT
+# Triggered ONLY on pushes to main (i.e., after a PR is merged).
+# Packages the CLAFS application (excluding node_modules, tests, coverage)
+# into a versioned .zip artifact and uploads it to GitHub Actions.
+#
+# This artifact represents the deployable release of CLAFS and can be:
+#   - Downloaded and deployed to a Node.js server
+#   - Picked up by a future deployment job (Render, Railway, etc.)
+# ══════════════════════════════════════════════════════════════════════════════
+  release:
+    name: 🚀 Release Artifact (main only)
+    runs-on: ubuntu-latest
+    needs: [lint, test, security]     # All quality gates must pass first
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install production dependencies only
+        run: npm ci --omit=dev
+
+      # Rebuild bcrypt for the production environment
+      - name: Rebuild native modules (bcrypt)
+        run: npm rebuild bcrypt --build-from-source || true
+
+      # Build version string: v1.0.0-<short-sha>-<date>
+      - name: Generate release version
+        id: version
+        run: |
+          VERSION="v$(node -p "require('./package.json').version")-$(git rev-parse --short HEAD)-$(date +'%Y%m%d')"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Generated release version: ${VERSION}"
+
+      # Package application — exclude dev artefacts
+      - name: Package application
+        run: |
+          mkdir -p dist
+
+          # Copy application source directories
+          cp -r src             dist/
+          cp -r services        dist/
+          cp -r repositories    dist/
+          cp -r factories       dist/
+          cp -r creational_patterns dist/
+          cp -r api             dist/
+          cp -r docs            dist/
+          cp    package.json    dist/
+          cp    package-lock.json dist/
+
+          # Copy documentation
+          cp README.md          dist/ 2>/dev/null || true
+          cp CHANGELOG.md       dist/ 2>/dev/null || true
+          cp PROTECTION.md      dist/ 2>/dev/null || true
+
+          # Copy production node_modules
+          cp -r node_modules    dist/
+
+          # Write build metadata
+          cat > dist/BUILD_INFO.json << EOF
+          {
+            "project":     "CLAFS — Campus Lost & Found System",
+            "author":      "Mlungisi Mbuyazi",
+            "institution": "Cape Peninsula University of Technology",
+            "version":     "${{ steps.version.outputs.version }}",
+            "commit":      "${{ github.sha }}",
+            "branch":      "${{ github.ref_name }}",
+            "builtAt":     "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "nodeVersion": "$(node --version)",
+            "npmVersion":  "$(npm --version)"
+          }
+          EOF
+
+          echo "✅ dist/ contents:"
+          ls -lh dist/
+
+      - name: Create release archive
+        run: |
+          cd dist
+          zip -r "../${{ env.ARTIFACT_NAME }}-${{ steps.version.outputs.version }}.zip" . \
+            --exclude "*/\.*" \
+            --exclude "*/coverage/*"
+          cd ..
+          echo "✅ Archive size: $(du -sh ${{ env.ARTIFACT_NAME }}-${{ steps.version.outputs.version }}.zip | cut -f1)"
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}-${{ steps.version.outputs.version }}
+          path: ${{ env.ARTIFACT_NAME }}-${{ steps.version.outputs.version }}.zip
+          retention-days: 90
+
+      - name: Post release summary
+        run: |
+          echo "## 🎓 CLAFS Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field        | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Version**  | \`${{ steps.version.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit**   | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch**   | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Built at** | \`$(date -u +%Y-%m-%dT%H:%M:%SZ)\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Artifact** | \`${{ env.ARTIFACT_NAME }}-${{ steps.version.outputs.version }}.zip\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All quality gates passed. Artifact is ready for deployment." >> $GITHUB_STEP_SUMMARY

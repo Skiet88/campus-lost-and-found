@@ -19,7 +19,7 @@ class InMemoryItemReportRepository extends ItemReportRepository {
 
   // ── Generic CRUD ─────────────────────────────────────────────────────
 
-  async save(report) {
+  save(report) {
     if (!report || !report.itemId) {
       throw new Error('InMemoryItemReportRepository.save(): entity must have an itemId');
     }
@@ -27,44 +27,44 @@ class InMemoryItemReportRepository extends ItemReportRepository {
     return { ...report };
   }
 
-  async findById(id) {
+  findById(id) {
     const report = this._storage.get(id);
     return report ? { ...report } : null;
   }
 
-  async findAll() {
+  findAll() {
     return [...this._storage.values()].map(r => ({ ...r }));
   }
 
-  async delete(id) {
+  delete(id) {
     return this._storage.delete(id);
   }
 
-  async count() {
+  count() {
     return this._storage.size;
   }
 
   // ── Domain-Specific Queries ──────────────────────────────────────────
 
-  async findByUserId(userId) {
+  findByUserId(userId) {
     return [...this._storage.values()]
       .filter(r => r.userId === userId)
       .map(r => ({ ...r }));
   }
 
-  async findByStatus(status) {
+  findByStatus(status) {
     return [...this._storage.values()]
       .filter(r => r.status === status)
       .map(r => ({ ...r }));
   }
 
-  async findByType(type) {
+  findByType(type) {
     return [...this._storage.values()]
       .filter(r => r.type === type)
       .map(r => ({ ...r }));
   }
 
-  async findByCategory(category) {
+  findByCategory(category) {
     return [...this._storage.values()]
       .filter(r => r.category === category)
       .map(r => ({ ...r }));

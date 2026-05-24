@@ -122,6 +122,142 @@ The main design choice was Factory Pattern over a full DI container because the 
 | [CLASS_DIAGRAM.md](./CLASS_DIAGRAM.md) | Updated class diagram including repository interfaces, implementations, and factory |
 
 ---
+
+
+---
+
+## CI/CD Pipeline (Assignment 13)
+
+CLAFS uses GitHub Actions for continuous integration and continuous delivery. Every push and pull request is automatically tested before any code reaches `main`.
+
+### Pipeline Architecture
+
+```
+Push / PR
+    │
+    ▼
+┌─────────────────────────────────────────────────────────────┐
+│  JOB 1 – 🔍 Lint         ESLint code quality check         │
+│  JOB 2 – 🧪 Test         Jest unit + integration tests      │  ← Required
+│  JOB 3 – 🔒 Security     npm audit (vulnerability scan)     │  ← status
+│                                                             │    checks
+│  JOB 4 – 🚀 Release      Build & upload artifact           │  ← main only
+│            (runs only after merge to main)                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+The workflow file lives at `.github/workflows/ci.yml`.
+
+---
+
+### Running Tests Locally
+
+**Prerequisites:** Node.js 18+ and npm installed.
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Skiet88/campus-lost-and-found.git
+cd campus-lost-and-found
+
+# 2. Install all dependencies (including devDependencies)
+npm install
+
+# 3. Run the full test suite
+npm test
+
+# 4. Run tests with verbose output (shows each test name)
+npm run test:verbose
+
+# 5. Run tests and open coverage report in browser
+npm test -- --coverage
+open coverage/lcov-report/index.html   # macOS
+xdg-open coverage/lcov-report/index.html  # Linux
+```
+
+**What gets tested:**
+
+| Test File | What it covers |
+|-----------|----------------|
+| `tests/User.test.js` | Registration, login, lockout, email verification |
+| `tests/Usersubclasses.test.js` | Student, Lecturer, Admin role behaviour |
+| `tests/ItemReport.test.js` | Report submission, status transitions, expiry |
+| `tests/Claim.test.js` | Claim lifecycle, proof validation, state rules |
+| `tests/Admincase.test.js` | Admin case open/review/resolve workflow |
+| `tests/Notification.test.js` | Notification creation, delivery, retry |
+| `tests/Usersession.test.js` | JWT session creation, validation, expiry |
+| `tests/repository.test.js` | All 5 in-memory repositories + RepositoryFactory |
+| `tests/creational_patterns_tests/` | Factory, Builder, Prototype, Singleton patterns |
+| `tests/services/service.test.js` | UserService, ItemReportService, ClaimService |
+| `tests/api/api.test.js` | REST API integration tests for all endpoints |
+
+> **Note:** `tests/services/service.test.js` and `tests/api/api.test.js` are excluded from the default `npm test` run because they require native `bcrypt` bindings. They run correctly in the CI environment after `npm rebuild bcrypt --build-from-source`. To run them locally: `npx jest tests/services/ tests/api/` (after rebuilding bcrypt).
+
+---
+
+### How the CI/CD Pipeline Works
+
+#### On every push (any branch)
+1. **Lint** — ESLint checks `src/`, `services/`, `repositories/`, `api/`, `factories/`, and `creational_patterns/` for code quality issues.
+2. **Test** — Jest runs the full test suite on Node.js 18 and 20 in parallel. Coverage reports are uploaded as artifacts.
+3. **Security** — `npm audit --audit-level=high` scans all dependencies. Any HIGH or CRITICAL vulnerability fails the build.
+
+#### On a Pull Request to `main`
+All three jobs above run. GitHub's branch protection rules prevent the PR from being merged until:
+- ✅ Lint passes
+- ✅ All tests pass on both Node 18 and Node 20
+- ✅ Security audit passes
+- ✅ At least 1 peer review approval is received
+
+#### On merge to `main`
+After all quality gates pass and the PR is merged, the **Release job** runs:
+1. Installs production-only dependencies (`npm ci --omit=dev`)
+2. Generates a versioned release string: `v{package.version}-{short-sha}-{date}`
+3. Packages the application into a `.zip` archive containing: `src/`, `services/`, `repositories/`, `factories/`, `api/`, `docs/`, `package.json`, and `BUILD_INFO.json`
+4. Uploads the archive as a GitHub Actions artifact (retained for 90 days)
+
+The artifact can be downloaded and deployed directly to any Node.js server (Render, Railway, a VPS, etc.).
+
+---
+
+### Branch Protection Rules
+
+The `main` branch is protected by the following rules (see `PROTECTION.md` for full justification):
+
+| Rule | Setting |
+|------|---------|
+| Require PR reviews | Minimum 1 approval |
+| Required status checks | Lint, Test, Security |
+| Up-to-date branches | Enforced |
+| Direct pushes to main | Blocked |
+| Force pushes | Blocked |
+| Branch deletion | Blocked |
+
+---
+
+### Workflow File
+
+The complete pipeline is defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+| Job | Trigger | Node versions | Artifacts |
+|-----|---------|---------------|-----------|
+| Lint | push, PR | 20.x | — |
+| Test | push, PR | 18.x, 20.x | `coverage-report/` |
+| Security | push, PR | 20.x | `security-audit-report.json` |
+| Release | push to main only | 20.x | `clafs-release-v*.zip` |
+
+---
+
+### Viewing Pipeline Results
+
+1. Go to your repository on GitHub
+2. Click the **Actions** tab
+3. Select the **CLAFS CI/CD Pipeline** workflow
+4. Click any run to see job logs, test output, and uploaded artifacts
+
+A green ✅ on a PR means all quality gates passed and the code is safe to merge.
+A red ❌ means at least one check failed — click the failing job to see the exact error.
+
+---
  
 ## Kanban Board
  

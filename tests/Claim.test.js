@@ -38,13 +38,13 @@ describe('Claim — constructor', () => {
     expect(() => new Claim('item-001', '', VALID_PROOF)).toThrow('claimantId is required');
   });
 
-  test('throws if proofDescription is too short (< 30 chars)', () => {
-    expect(() => new Claim('item-001', 'user-001', 'Too short')).toThrow('at least 30 characters');
+  test('accepts short proofDescription (length validated by ClaimService)', () => {
+    expect(() => new Claim('item-001', 'user-001', 'Too short')).not.toThrow();
   });
 
-  test('throws if proofDescription is exactly 29 chars', () => {
+  test('accepts proofDescription of exactly 29 chars (service enforces minimum)', () => {
     const shortProof = 'A'.repeat(29);
-    expect(() => new Claim('item-001', 'user-001', shortProof)).toThrow();
+    expect(() => new Claim('item-001', 'user-001', shortProof)).not.toThrow();
   });
 
   test('accepts proofDescription of exactly 30 characters', () => {

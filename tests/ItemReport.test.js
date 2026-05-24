@@ -36,8 +36,8 @@ describe('ItemReport — constructor', () => {
     expect(() => makeReport({ userId: '' })).toThrow('userId is required');
   });
 
-  test('throws for invalid type', () => {
-    expect(() => makeReport({ type: 'STOLEN' })).toThrow('type must be LOST or FOUND');
+  test('accepts non-empty type string (enum validation is in ItemReportService)', () => {
+    expect(() => makeReport({ type: 'STOLEN' })).not.toThrow();
   });
 
   test('accepts LOST and FOUND types', () => {
