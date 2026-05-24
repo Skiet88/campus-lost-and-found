@@ -28,7 +28,7 @@ class InMemoryClaimRepository extends ClaimRepository {
 
   // ── Generic CRUD ───────────────────────────────────────────────────────
 
-  async save(claim) {
+  save(claim) {
     if (!claim || !claim.claimId) {
       throw new Error('InMemoryClaimRepository.save(): entity must have a claimId');
     }
@@ -36,38 +36,38 @@ class InMemoryClaimRepository extends ClaimRepository {
     return { ...claim };
   }
 
-  async findById(id) {
+  findById(id) {
     const claim = this._storage.get(id);
     return claim ? { ...claim } : null;
   }
 
-  async findAll() {
+  findAll() {
     return [...this._storage.values()].map(c => ({ ...c }));
   }
 
-  async delete(id) {
+  delete(id) {
     return this._storage.delete(id);
   }
 
-  async count() {
+  count() {
     return this._storage.size;
   }
 
   // ── Domain-Specific Queries ────────────────────────────────────────────
 
-  async findByItemId(itemId) {
+  findByItemId(itemId) {
     return [...this._storage.values()]
       .filter(c => c.itemId === itemId)
       .map(c => ({ ...c }));
   }
 
-  async findByClaimantId(claimantId) {
+  findByClaimantId(claimantId) {
     return [...this._storage.values()]
       .filter(c => c.claimantId === claimantId)
       .map(c => ({ ...c }));
   }
 
-  async findByStatus(status) {
+  findByStatus(status) {
     return [...this._storage.values()]
       .filter(c => c.status === status)
       .map(c => ({ ...c }));
@@ -77,7 +77,7 @@ class InMemoryClaimRepository extends ClaimRepository {
    * Business rule enforcement: a user cannot submit more than one
    * claim per ItemReport (DOMAIN_MODEL.md — Claim business rules).
    */
-  async existsByClaimantAndItem(claimantId, itemId) {
+  existsByClaimantAndItem(claimantId, itemId) {
     for (const claim of this._storage.values()) {
       if (claim.claimantId === claimantId && claim.itemId === itemId) return true;
     }
@@ -100,7 +100,7 @@ class InMemoryNotificationRepository extends NotificationRepository {
 
   // ── Generic CRUD ───────────────────────────────────────────────────────
 
-  async save(notification) {
+  save(notification) {
     if (!notification || !notification.notificationId) {
       throw new Error('InMemoryNotificationRepository.save(): entity must have a notificationId');
     }
@@ -108,38 +108,38 @@ class InMemoryNotificationRepository extends NotificationRepository {
     return { ...notification };
   }
 
-  async findById(id) {
+  findById(id) {
     const n = this._storage.get(id);
     return n ? { ...n } : null;
   }
 
-  async findAll() {
+  findAll() {
     return [...this._storage.values()].map(n => ({ ...n }));
   }
 
-  async delete(id) {
+  delete(id) {
     return this._storage.delete(id);
   }
 
-  async count() {
+  count() {
     return this._storage.size;
   }
 
   // ── Domain-Specific Queries ────────────────────────────────────────────
 
-  async findByUserId(userId) {
+  findByUserId(userId) {
     return [...this._storage.values()]
       .filter(n => n.userId === userId)
       .map(n => ({ ...n }));
   }
 
-  async findUnreadByUserId(userId) {
+  findUnreadByUserId(userId) {
     return [...this._storage.values()]
       .filter(n => n.userId === userId && n.isRead === false)
       .map(n => ({ ...n }));
   }
 
-  async markAllReadByUserId(userId) {
+  markAllReadByUserId(userId) {
     let count = 0;
     for (const [id, n] of this._storage.entries()) {
       if (n.userId === userId && !n.isRead) {
@@ -166,7 +166,7 @@ class InMemoryAdminCaseRepository extends AdminCaseRepository {
 
   // ── Generic CRUD ───────────────────────────────────────────────────────
 
-  async save(adminCase) {
+  save(adminCase) {
     if (!adminCase || !adminCase.caseId) {
       throw new Error('InMemoryAdminCaseRepository.save(): entity must have a caseId');
     }
@@ -174,40 +174,40 @@ class InMemoryAdminCaseRepository extends AdminCaseRepository {
     return { ...adminCase };
   }
 
-  async findById(id) {
+  findById(id) {
     const c = this._storage.get(id);
     return c ? { ...c } : null;
   }
 
-  async findAll() {
+  findAll() {
     return [...this._storage.values()].map(c => ({ ...c }));
   }
 
-  async delete(id) {
+  delete(id) {
     return this._storage.delete(id);
   }
 
-  async count() {
+  count() {
     return this._storage.size;
   }
 
   // ── Domain-Specific Queries ────────────────────────────────────────────
 
   /** Business rule: one AdminCase per ItemReport — returns single or null. */
-  async findByItemId(itemId) {
+  findByItemId(itemId) {
     for (const c of this._storage.values()) {
       if (c.itemId === itemId) return { ...c };
     }
     return null;
   }
 
-  async findByAdminId(adminId) {
+  findByAdminId(adminId) {
     return [...this._storage.values()]
       .filter(c => c.adminId === adminId)
       .map(c => ({ ...c }));
   }
 
-  async findByStatus(status) {
+  findByStatus(status) {
     return [...this._storage.values()]
       .filter(c => c.status === status)
       .map(c => ({ ...c }));

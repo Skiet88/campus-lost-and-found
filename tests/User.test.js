@@ -17,6 +17,7 @@ jest.mock('bcrypt', () => ({
 jest.mock('uuid', () => ({ v4: jest.fn(() => 'mock-uuid-user') }), { virtual: true });
 
 const User = require('../src/User');
+const bcrypt = require('bcrypt');
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -69,7 +70,7 @@ describe('User — register()', () => {
   test('hashes the password and clears plain text', async () => {
     const user = makeUser();
     await user.register();
-    expect(user._passwordHash).toBe('hashed_Password123');
+    await expect(bcrypt.compare('Password123', user._passwordHash)).resolves.toBe(true);
     expect(user._plainPassword).toBeNull();
   });
 
@@ -149,7 +150,7 @@ describe('User — resetPassword()', () => {
     const user = makeUser();
     await user.register();
     await user.resetPassword('NewPassword456');
-    expect(user._passwordHash).toBe('hashed_NewPassword456');
+    await expect(bcrypt.compare('NewPassword456', user._passwordHash)).resolves.toBe(true);
   });
 
   test('throws if new password is too short', async () => {
