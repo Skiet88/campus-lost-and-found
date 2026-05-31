@@ -258,7 +258,72 @@ A green ✅ on a PR means all quality gates passed and the code is safe to merge
 A red ❌ means at least one check failed — click the failing job to see the exact error.
 
 ---
- 
+
+
+---
+
+## Getting Started
+
+Whether you want to run CLAFS locally or contribute to the project, here is everything you need.
+
+### Prerequisites
+
+| Tool | Minimum Version | Check |
+|------|----------------|-------|
+| Node.js | 18.x or higher | `node --version` |
+| npm | 8.x or higher | `npm --version` |
+| Git | Any recent version | `git --version` |
+
+No database required — CLAFS uses in-memory repositories for local development.
+
+### Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Skiet88/campus-lost-and-found.git
+cd campus-lost-and-found
+
+# 2. Install dependencies
+npm install
+
+# 3. Run tests to verify everything works
+npm test
+
+# 4. Start the API server
+node api/app.js
+# → API running at http://localhost:3000
+# → OpenAPI docs at http://localhost:3000/api/docs
+# → Health check at http://localhost:3000/api/health
+```
+
+> If `bcrypt` fails during install, run:
+> `npm rebuild bcrypt --build-from-source`
+
+---
+
+## Features for Contribution
+
+CLAFS is actively looking for contributors. The table below shows open features and their complexity so you can pick work that matches your experience level.
+
+| Feature | Complexity | Label | Description |
+|---------|-----------|-------|-------------|
+| Database migration SQL files | 🟢 Small | `good-first-issue` | Create `/migrations` folder with SQL schema for all 7 entities |
+| Rate limiting on login | 🟢 Small | `good-first-issue` | Add `express-rate-limit` to `POST /api/users/login` |
+| Input sanitisation middleware | 🟢 Small | `good-first-issue` | Add `helmet` + string sanitisation to the Express app |
+| Docker support | 🟢 Small | `good-first-issue` | Write `Dockerfile` + `docker-compose.yml` for API + PostgreSQL |
+| Pagination for reports list | 🟢 Small | `good-first-issue` | Add `?page=` and `?limit=` to `GET /api/reports` |
+| PostgreSQL repositories | 🟡 Medium | `feature-request` | Implement the DB stubs already in `factories/stubs/` |
+| JWT authentication | 🟡 Medium | `feature-request` | Token generation on login + protected route middleware |
+| Email notifications | 🟡 Medium | `feature-request` | Nodemailer integration using the existing Notification factory |
+| React frontend | 🔴 Large | `feature-request` | Vite + React app in `/client` connected to the REST API |
+| Redis caching | 🔴 Large | `feature-request` | Cache `GET /api/reports` with 5-minute TTL |
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup instructions, coding standards, and how to submit a PR.
+See [ROADMAP.md](./ROADMAP.md) for the full list of planned features with implementation notes.
+
+---
+
+
 ## Kanban Board
  
 The CLAFS project is managed using a customised **Automated Kanban** board on GitHub Projects.
