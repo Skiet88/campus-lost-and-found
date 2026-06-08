@@ -15,6 +15,7 @@
 
 const { ItemReportBuilder, ItemReportDirector } = require('../creational_patterns/ItemReportBuilder');
 
+// ── Helpers ───────────────────────────────────────────────────────────────
 
 function validBuilder() {
   return new ItemReportBuilder()
@@ -26,6 +27,7 @@ function validBuilder() {
     .setDateLostFound('2025-04-01');
 }
 
+// ── 1. Required field validation ──────────────────────────────────────────
 
 describe('ItemReportBuilder — missing required fields', () => {
 
@@ -36,8 +38,7 @@ describe('ItemReportBuilder — missing required fields', () => {
       .setDescription('Dell XPS 15')
       .setLocation('Library')
       .setDateLostFound('2025-04-01');
-
-    expect(() => builder.build()).toThrow('userId');
+    expect(() => builder.build()).toThrow('userId is required');
   });
 
   test('throws when type is missing', () => {
@@ -47,8 +48,7 @@ describe('ItemReportBuilder — missing required fields', () => {
       .setDescription('Dell XPS 15')
       .setLocation('Library')
       .setDateLostFound('2025-04-01');
-
-    expect(() => builder.build()).toThrow('type');
+    expect(() => builder.build()).toThrow('type is required');
   });
 
   test('throws when title is missing', () => {
@@ -58,8 +58,7 @@ describe('ItemReportBuilder — missing required fields', () => {
       .setDescription('Dell XPS 15')
       .setLocation('Library')
       .setDateLostFound('2025-04-01');
-
-    expect(() => builder.build()).toThrow('title');
+    expect(() => builder.build()).toThrow('title is required');
   });
 
   test('throws when description is missing', () => {
@@ -69,8 +68,7 @@ describe('ItemReportBuilder — missing required fields', () => {
       .setTitle('Blue Laptop')
       .setLocation('Library')
       .setDateLostFound('2025-04-01');
-
-    expect(() => builder.build()).toThrow('description');
+    expect(() => builder.build()).toThrow('description is required');
   });
 
   test('throws when location is missing', () => {
@@ -80,8 +78,7 @@ describe('ItemReportBuilder — missing required fields', () => {
       .setTitle('Blue Laptop')
       .setDescription('Dell XPS 15')
       .setDateLostFound('2025-04-01');
-
-    expect(() => builder.build()).toThrow('location');
+    expect(() => builder.build()).toThrow('location is required');
   });
 
   test('throws when dateLostFound is missing', () => {
@@ -91,45 +88,56 @@ describe('ItemReportBuilder — missing required fields', () => {
       .setTitle('Blue Laptop')
       .setDescription('Dell XPS 15')
       .setLocation('Library');
-
-    expect(() => builder.build()).toThrow('dateLostFound');
+    expect(() => builder.build()).toThrow('dateLostFound is required');
   });
 
   test('throws when build() is called on a brand-new builder with no fields', () => {
     const builder = new ItemReportBuilder();
-    expect(() => builder.build()).toThrow();
+    expect(() => builder.build()).toThrow('userId is required');
   });
 });
 
+// ── 2. Empty string / whitespace edge cases ───────────────────────────────
 
 describe('ItemReportBuilder — empty string values', () => {
 
   test('throws when userId is an empty string', () => {
     const builder = validBuilder().setUserId('');
-    expect(() => builder.build()).toThrow('userId');
+    expect(() => builder.build()).toThrow('userId is required');
   });
 
   test('throws when title is an empty string', () => {
     const builder = validBuilder().setTitle('');
-    expect(() => builder.build()).toThrow('title');
+    expect(() => builder.build()).toThrow('title is required');
   });
 
   test('throws when description is an empty string', () => {
     const builder = validBuilder().setDescription('');
-    expect(() => builder.build()).toThrow('description');
+    expect(() => builder.build()).toThrow('description is required');
   });
 
   test('throws when location is an empty string', () => {
     const builder = validBuilder().setLocation('');
-    expect(() => builder.build()).toThrow('location');
+    expect(() => builder.build()).toThrow('location is required');
   });
 
   test('throws when dateLostFound is an empty string', () => {
     const builder = validBuilder().setDateLostFound('');
-    expect(() => builder.build()).toThrow('dateLostFound');
+    expect(() => builder.build()).toThrow('dateLostFound is required');
+  });
+
+  test('throws when userId is only whitespace', () => {
+    const builder = validBuilder().setUserId('   ');
+    expect(() => builder.build()).toThrow('userId is required');
+  });
+
+  test('throws when title is only whitespace', () => {
+    const builder = validBuilder().setTitle('   ');
+    expect(() => builder.build()).toThrow('title is required');
   });
 });
 
+// ── 3. Optional fields behaviour ──────────────────────────────────────────
 
 describe('ItemReportBuilder — optional fields', () => {
 
@@ -156,12 +164,12 @@ describe('ItemReportBuilder — optional fields', () => {
   });
 });
 
+// ── 4. Successful builds ──────────────────────────────────────────────────
 
 describe('ItemReportBuilder — successful builds', () => {
 
   test('builds a LOST report with all required fields', () => {
     const report = validBuilder().build();
-
     expect(report.userId).toBe('user-123');
     expect(report.type).toBe('LOST');
     expect(report.title).toBe('Blue Laptop');
@@ -181,13 +189,13 @@ describe('ItemReportBuilder — successful builds', () => {
       .setDateLostFound('2025-04-02')
       .setImageUrl('https://cdn.example.com/umbrella.jpg')
       .build();
-
     expect(report.type).toBe('FOUND');
     expect(report.category).toBe('ACCESSORIES');
     expect(report.imageUrl).toBe('https://cdn.example.com/umbrella.jpg');
   });
 });
 
+// ── 5. Builder reuse via reset() ──────────────────────────────────────────
 
 describe('ItemReportBuilder — reset() behaviour', () => {
 
@@ -195,13 +203,12 @@ describe('ItemReportBuilder — reset() behaviour', () => {
     const builder = validBuilder();
     builder.build();
     builder.reset();
-    expect(() => builder.build()).toThrow();
+    expect(() => builder.build()).toThrow('userId is required');
   });
 
   test('reset() restores category default to GENERAL', () => {
     const builder = validBuilder().setCategory('ELECTRONICS');
     builder.reset();
-
     const report = builder
       .setUserId('user-789')
       .setType('LOST')
@@ -210,14 +217,12 @@ describe('ItemReportBuilder — reset() behaviour', () => {
       .setLocation('Parking lot')
       .setDateLostFound('2025-04-03')
       .build();
-
     expect(report.category).toBe('GENERAL');
   });
 
   test('builder can be reused after reset() to build a different report', () => {
     const builder = validBuilder();
     const first = builder.build();
-
     builder
       .reset()
       .setUserId('user-999')
@@ -226,21 +231,19 @@ describe('ItemReportBuilder — reset() behaviour', () => {
       .setDescription('Found on the ground near Block B')
       .setLocation('Block B')
       .setDateLostFound('2025-04-05');
-
     const second = builder.build();
-
     expect(first.title).toBe('Blue Laptop');
     expect(second.title).toBe('Student Card');
     expect(second.type).toBe('FOUND');
   });
 });
 
+// ── 6. Fluent interface (method chaining) ─────────────────────────────────
 
 describe('ItemReportBuilder — fluent interface', () => {
 
   test('each setter returns the builder instance for chaining', () => {
     const builder = new ItemReportBuilder();
-
     expect(builder.setUserId('u1')).toBe(builder);
     expect(builder.setType('LOST')).toBe(builder);
     expect(builder.setTitle('t')).toBe(builder);
@@ -253,6 +256,7 @@ describe('ItemReportBuilder — fluent interface', () => {
   });
 });
 
+// ── 7. Director recipes ───────────────────────────────────────────────────
 
 describe('ItemReportDirector', () => {
 
@@ -266,7 +270,6 @@ describe('ItemReportDirector', () => {
     const report = director.buildMinimalLostReport(
       'user-001', 'Glasses', 'Black framed glasses', 'Lecture Hall A', '2025-04-10'
     );
-
     expect(report.type).toBe('LOST');
     expect(report.category).toBe('GENERAL');
     expect(report.imageUrl).toBeNull();
@@ -278,7 +281,6 @@ describe('ItemReportDirector', () => {
       'user-002', 'Wallet', 'Brown leather wallet', 'ACCESSORIES',
       'Cafeteria', '2025-04-11', 'https://cdn.example.com/wallet.jpg'
     );
-
     expect(report.type).toBe('FOUND');
     expect(report.category).toBe('ACCESSORIES');
     expect(report.imageUrl).toBe('https://cdn.example.com/wallet.jpg');
@@ -287,7 +289,7 @@ describe('ItemReportDirector', () => {
   test('director throws if a required field is missing in minimal report', () => {
     expect(() =>
       director.buildMinimalLostReport('user-001', '', 'desc', 'location', '2025-04-10')
-    ).toThrow('title');
+    ).toThrow('title is required');
   });
 
   test('director can build two reports in sequence using the same builder', () => {
@@ -297,7 +299,6 @@ describe('ItemReportDirector', () => {
     const second = director.buildMinimalLostReport(
       'user-B', 'Charger', 'USB-C charger', 'Lab', '2025-04-13'
     );
-
     expect(first.title).toBe('Phone');
     expect(second.title).toBe('Charger');
   });
